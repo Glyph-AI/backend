@@ -16,3 +16,4 @@ class Bot(Base):
     user = relationship("User", back_populates="bots")
     embeddings = relationship("Embedding", back_populates="bot")
     chats = relationship("Chat", back_populates="bot")
+    user_uploads = relationship("UserUpload", back_populates="bot")

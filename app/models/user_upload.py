@@ -11,8 +11,10 @@ class UserUpload(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     s3_link = Column(String, nullable=False)
+    bot_id = Column(Integer, ForeignKey("bots.id"))
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
 
     user = relationship("User", back_populates="user_uploads")
     texts = relationship("Text", back_populates="user_upload")
+    bot = relationship("Bot", back_populates="user_uploads")
