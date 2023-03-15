@@ -14,6 +14,7 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
+    role = Column(String, nullable=False)
     _password = Column(String)
     google_user_id = Column(String)
     s3_id_link = Column(String)
@@ -23,7 +24,7 @@ class User(Base):
                         server_default=func.now())
 
     user_uploads = relationship("UserUpload", back_populates="user")
-    bots = relationship("User", back_populates="user")
+    bots = relationship("Bot", back_populates="user")
     texts = relationship("Text", back_populates="user")
     embeddings = relationship("Embedding", back_populates="user")
     chats = relationship("Chat", back_populates="user")

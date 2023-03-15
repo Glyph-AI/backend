@@ -5,7 +5,11 @@ import app.schemas as schemas
 
 
 def get_user_by_id(db: Session, current_user: schemas.User, id: int):
-    db.query(User).get(int)
+    return db.query(User).get(int)
+
+
+def get_user_by_email(db: Session, email):
+    return db.query(User).filter(User.email == email).first()
 
 
 def create_user(db: Session, user_create_data: schemas.UserCreateSSO):

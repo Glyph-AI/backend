@@ -9,8 +9,9 @@ class Text(Base):
     __tablename__ = "texts"
 
     id = Column(Integer, primary_key=True, index=True)
-    user = Column(Integer, ForeignKey("users.id"))
-    user_upload = Column(Integer, ForeignKey("user_uploads.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    user_upload_id = Column(Integer, ForeignKey(
+        "user_uploads.id"), nullable=True)
     content = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
