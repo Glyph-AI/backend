@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# from app.routers import *
+from app.routers import *
 
 
 def create_app():
@@ -28,14 +28,9 @@ def create_app():
     async def root():
         return {"message": "I'm Alive"}
 
-    # app.include_router(users_router)
-    # app.include_router(referrals_router)
-    # app.include_router(admin_router)
-    # app.include_router(ledger_router)
-    # app.include_router(skill_router)
-    # app.include_router(chats_router)
-    # app.include_router(auth_router)
-    # app.include_router(notifications_router)
-    # app.include_router(search_users_router)
+    app.include_router(bots_router)
+    app.include_router(users_router)
+    app.include_router(chats_router)
+    app.include_router(user_uploads_router)
 
     return app

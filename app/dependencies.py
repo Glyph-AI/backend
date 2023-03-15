@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 import app.models as models
 from app.schemas import User, Token, TokenData
 import app.crud.user as user_crud
-from app.errors import errors
+from app.errors import Errors
 from jose import JWTError, jwt
 from typing import Optional, Dict
 import os
@@ -66,20 +66,20 @@ async def get_current_user(db: Session = Depends(get_db), token: Token = Depends
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
-            raise errors["credentials_error"]
+            raise Errors.credentials_error
         token_data = TokenData(email=email)
     except JWTError:
-        raise errors["credentials_error"]
+        raise Errors.credentials_error
     user = user_crud.get_user_by_email(db, email=token_data.email)
     if user is None:
-        raise errors["credentials_error"]
+        raise Errors.credentials_error
 
     return user
 
 
 async def current_user_is_admin(current_user: User = Depends(get_current_user)):
     if not current_user.admin:
-        raise errors["credentials_error"]
+        raise Errors.credentials_error
     return current_user
 
 

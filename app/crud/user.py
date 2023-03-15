@@ -1,7 +1,6 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session
-from app.models import User, Skill, Referral, UserSkill
-from . import ledger_record as ledger_record_crud
+from app.models import User
 import app.schemas as schemas
 
 
