@@ -10,6 +10,7 @@ def get_bots(db: Session, current_user: schemas.User):
 
 def create_bot(db: Session, current_user: schemas.User, bot_data: schemas.BotBase):
     db_bot = Bot(**bot_data.dict())
+    db_bot.user_id = current_user.id
     db.add(db_bot)
     db.commit()
     db.refresh(db_bot)
