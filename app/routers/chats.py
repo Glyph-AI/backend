@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from fastapi.encoders import jsonable_encoder
+import asyncio
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 import os
@@ -65,16 +66,6 @@ def create_chat(chat_data: ChatBase, bot_id: int, db: Session = Depends(get_db),
     return chat_crud.create_chat(chat_data, bot_id, db, current_user)
 
 
-# OLD HTTP
-# @chats_router.post("/{chat_id}/message", response_model=Chat)
-# def send_message(bot_id: int, chat_id: int, newMessage: ChatMessageCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-#     # process incoming message content
-
-#     return chat_crud.create_message(bot_id, chat_id, newMessage, db, current_user)
-
-# NEW WS
-
-
 @chats_router.websocket("/{chat_id}/{chat_token}")
 async def chat_endpoint(bot_id: int, chat_id: int, chat_token: str, websocket: WebSocket, db: Session = Depends(get_db)):
     current_user = decode_chat_token(db, chat_token)
@@ -87,14 +78,15 @@ async def chat_endpoint(bot_id: int, chat_id: int, chat_token: str, websocket: W
                 messageJson = ChatMessageCreate(**json.loads(newMessage))
                 chatJson = handle_message_creation(
                     bot_id, chat_id, messageJson, db, current_user)
-                await manager.send_personal_message(json.dumps(chatJson), websocket)
 
                 # create instance of Glyph
                 glyph = Glyph()
-                message = await glyph.process_message(messageJson.content)
+                message = glyph.process_message(
+                    messageJson.content, bot_id, chat_id, db)
                 # process and respond
                 messageJson = ChatMessageCreate(
                     **{"content": message, "role": "assistant", "chat_id": chat_id})
+
                 chatJson = handle_message_creation(
                     bot_id, chat_id, messageJson, db, current_user)
 
@@ -105,4 +97,5 @@ async def chat_endpoint(bot_id: int, chat_id: int, chat_token: str, websocket: W
 
 @chats_router.get("/{chat_id}/", response_model=Chat)
 def get_all_messages_for_chat(bot_id: int, chat_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return chat_crud.get_chat_by_id(bot_id, chat_id, db, current_user)
+    output = chat_crud.get_chat_by_id(bot_id, chat_id, db, current_user)
+    return output

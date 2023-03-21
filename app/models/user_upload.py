@@ -12,6 +12,7 @@ class UserUpload(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     s3_link = Column(String, nullable=False)
     bot_id = Column(Integer, ForeignKey("bots.id"))
+    processed = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
 

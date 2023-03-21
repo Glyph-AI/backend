@@ -16,3 +16,8 @@ google-auth
 google-api-python-client
 requests
 pgvector
+python-multipart
+boto3
+celery
+redis
+chardet

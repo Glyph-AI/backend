@@ -1,0 +1,297 @@
+import numpy as np
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import Adam, SGD, RMSprop
+from tensorflow.keras.regularizers import l2
+from tensorflow.keras.layers import Dense
+from collections import deque
+import matplotlib.pyplot as plt
+import gym
+import random
+import sys
+import wandb
+import csv
+
+import tensorflow as tf
+
+tf.compat.v1.disable_eager_execution()
+
+
+class DQN:
+    def __init__(self,
+                 environment,
+                 episodes=500,
+                 epsilon=0.9,
+                 decay_epsilon=lambda ep, step: ep * 1,
+                 explore_stop=250,
+                 gamma=1.0,
+                 min_experience=2048,
+                 max_experience=100000,
+                 nn_lr=0.001,
+                 verbose=True,
+                 nn_verbose=0,
+                 nn_hidden_architecture=[
+                     {"type": "Dense", "config": {"units": 256, "activation": "relu"}}],
+                 nn_model_batch_size=64,
+                 nn_model_epochs=1,
+                 render=True,
+                 update_target_every=20,
+                 test_episodes=10,
+                 max_steps=200,
+                 graph_prefix="",
+                 fit_step=1
+                 ):
+
+        self.env_name = environment
+        self.nn_hidden_architecture = nn_hidden_architecture
+        self.episodes = episodes
+        self.epsilon = epsilon
+        self.decay_epsilon = decay_epsilon
+        self.explore_stop = explore_stop
+        self.gamma = gamma
+        self.min_experience = min_experience
+        self.max_experience = max_experience
+        self.nn_lr = nn_lr
+        self.nn_verbose = nn_verbose
+        self.nn_model_batch_size = nn_model_batch_size
+        self.nn_model_epochs = nn_model_epochs
+        self.render = render
+        self.update_target_every = update_target_every
+        self.verbose = verbose
+        self.test_episodes = test_episodes
+        self.max_steps = max_steps
+        self.graph_prefix = graph_prefix
+        self.fit_step = fit_step
+
+        self.seed = 1
+        self.env = gym.make(environment)
+        self.env.seed = self.seed
+        random.seed(self.seed)
+        np.random.seed(self.seed)
+
+        self.obs_space = self.env.observation_space.shape[0]
+        self.action_space = self.env.action_space.n
+
+        self.policy_model = self.create_model()
+        self.target_model = self.create_model()
+
+        self.memory = deque(maxlen=self.max_experience)
+
+    def __str_to_class(self, classname):
+        return getattr(sys.modules[__name__], classname)
+
+    def create_model(self):
+        model = Sequential()
+        model.add(
+            Dense(self.obs_space * 2, input_dim=self.obs_space, activation="relu"))
+
+        for layer in self.nn_hidden_architecture:
+            layer_type = self.__str_to_class(layer["type"])
+            layer_config = layer["config"]
+            # layer_config["kernel_initializer"] = 'zeros'
+
+            model.add(layer_type(**layer_config))
+
+        model.add(Dense(self.action_space, activation="linear"))
+        model.compile(loss="mse", optimizer=RMSprop(
+            learning_rate=self.nn_lr, clipnorm=1.), metrics=["mae"])
+
+        return model
+
+    def next_action(self, state, epsilon):
+        if np.random.random() < epsilon:
+            return np.random.randint(self.action_space)
+
+        prediction = self.policy_model.predict(state)
+        return np.argmax(prediction)
+
+    def fit_policy_model(self):
+        if len(self.memory) < self.min_experience:
+            return [0]
+
+        batch = random.sample(self.memory, self.min_experience)
+
+        current_states = np.array([i[0][0] for i in batch])
+        next_states = np.array([i[3][0] for i in batch])
+
+        target = self.target_model.predict(current_states)
+        next_target = self.target_model.predict(next_states)
+
+        x = []
+        y = []
+
+        for idx, datapoint in enumerate(batch):
+            _, action, reward, _, done = datapoint
+            target[idx][action] = reward if done else reward + \
+                (self.gamma * np.max(next_target[idx]))
+            y.append(target[idx])
+
+        x = current_states
+        y = np.array(y)
+        history = self.policy_model.fit(x, y, epochs=self.nn_model_epochs,
+                                        batch_size=self.nn_model_batch_size, verbose=self.nn_verbose)
+        
+        wandb.log({"loss": history.history["loss"][-1]})
+        return history.history["loss"]
+
+    def update_target_model(self):
+        policy_weights = self.policy_model.get_weights()
+        target_weights = self.target_model.get_weights()
+
+        for i in range(len(target_weights)):
+            target_weights[i] = policy_weights[i]
+
+        self.target_model.set_weights(target_weights)
+
+    def save_memory(self):
+        d_list = list(self.memory)
+        fields = ["state", "action", "reward", "new_state", "done"]
+        filename = f"{self.graph_prefix}_memory.csv"
+
+        with open(filename, "w+") as csvfile:
+            csvwriter = csv.writer(csvfile)
+            csvwriter.writerow(fields)
+            csvwriter.writerows(d_list)
+
+
+    def execute(self, episodes, train=True):
+        rewards = []
+        last_episode_reward = 0
+        total_steps = 0
+        rolling_averages = []
+        losses = []
+
+        epsilon = self.epsilon
+
+        if not train:
+            epsilon = 0
+
+        for episode in range(episodes):
+            state = self.env.reset().reshape(1, self.obs_space)
+            done = False
+            step = 0
+            episode_reward = 0
+
+            while not done:
+                if self.render:
+                    self.env.render()
+
+                # Navigate
+                action = self.next_action(state, epsilon)
+                new_state, reward, done, info = self.env.step(action)
+                new_state = new_state.reshape(1, self.obs_space)
+
+                #Store in memory
+
+                # Scale Stored Reward to range of 0,1 for training purposes
+                # scaled_reward = (float(reward) + 100.) / 200.
+
+                self.memory.append(
+                    [state, action, reward, new_state, done])
+
+                # Update iteration variables
+                state = new_state
+                step += 1
+                total_steps += 1
+                episode_reward += reward
+
+                # Fit Policy Model on replayed data
+                if train and step % self.fit_step == 0:
+                    # losses.append(np.mean(self.fit_policy_model()))
+                    losses += self.fit_policy_model()
+
+                    if total_steps % self.update_target_every == 0:
+                        self.update_target_model()
+
+                if step == self.max_steps:
+                    break
+
+            last_episode_reward = episode_reward
+            rewards.append(episode_reward)
+
+            if train:
+                wandb.log({"reward": episode_reward, "episode": episode, "epsilon": self.epsilon})
+            else:
+                wandb.log({"test_reward": episode_reward, "episode": episode})
+
+            
+            wandb.log({"episode": episode, "step_count": step})
+                
+
+            # Decay Epsilon
+            self.epsilon = self.decay_epsilon(self.epsilon, episode)
+
+            # Stop exploring and stay on policy
+            if episode == self.explore_stop:
+                self.epsilon = 0
+
+            if episode >= 100:
+                rolling_averages.append(np.mean(rewards[-100:]))
+                wandb.log({"average_reward": rolling_averages[-1]})
+            else:
+                rolling_averages.append(None)
+
+            if self.verbose:
+                print(f"<<<<<<<<<<<<EPISODE: {episode}>>>>>>>>>>>>>")
+                print(f"Episode Reward: {episode_reward}")
+                print(f"Step Count: {step}")
+                if episode >= 100:
+                    print(f"Average Reward: {rolling_averages[-1]}")
+                if train and len(self.memory) > self.min_experience:
+                    print(f"Final Loss: {losses[-1]}")
+                print(f"Current Epsilon: {self.epsilon}")
+
+                # Add checkpoints
+                # if episode % 10 == 0 and train:
+                #     plt.plot(rewards)
+                #     plt.plot(rolling_averages)
+                #     plt.savefig(f"{self.graph_prefix}_training_rewards.png")
+                #     plt.clf()
+
+                #     plt.plot(losses)
+                #     plt.savefig(f"{self.graph_prefix}_training_loss.png")
+                #     plt.clf()
+
+                    # self.policy_model.save(f"{self.graph_prefix}_dqn_model")
+
+            if episode >= 100 and rolling_averages[-1] >= 200:
+                break
+            
+        return rolling_averages, rewards
+
+    def main(self):
+        try:
+            average_reward, training_rewards = self.execute(self.episodes)
+            wandb.log({"average_train_reward": np.mean(training_rewards)})
+            # plt.plot(training_rewards)
+            # plt.savefig(f"{self.graph_prefix}_training_rewards_final.png")
+            # plt.clf()
+
+            _, test_rewards = self.execute(self.test_episodes, train=False)
+            wandb.log({"average_test_reward": np.mean(test_rewards)})
+            # plt.plot(test_rewards)
+            # plt.savefig(f"{self.graph_prefix}_test_rewards_final.png")
+
+            self.policy_model.save(f"{self.graph_prefix}_dqn_model_final.h5")
+            artifact = wandb.Artifact('dqn_model', type='model')
+            artifact.add_file(f"{self.graph_prefix}_dqn_model_final.h5")
+
+            self.save_memory()
+            data_artifact = wandb.Artifact('deque', type='dataset')
+            data_artifact.add_file(f"{self.graph_prefix}_memory.csv")
+
+
+        except KeyboardInterrupt:
+            _, test_rewards = self.execute(self.test_episodes, train=False)
+            wandb.log({"average_test_reward": np.mean(test_rewards)})
+            # plt.plot(test_rewards)
+            # plt.savefig(f"{self.graph_prefix}_test_rewards_final.png")
+
+            self.policy_model.save(f"{self.graph_prefix}_dqn_model_final.h5")
+            artifact = wandb.Artifact('dqn_model', type='model')
+            artifact.add_file(f"{self.graph_prefix}_dqn_model_final.h5")
+
+            self.save_memory()
+            data_artifact = wandb.Artifact('deque', type='dataset')
+            data_artifact.add_file(f"{self.graph_prefix}_memory.csv")
+
+        return [artifact, data_artifact]

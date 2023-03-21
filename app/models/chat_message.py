@@ -12,7 +12,14 @@ class ChatMessage(Base):
     chat_id = Column(Integer, ForeignKey("chats.id"))
     role = Column(String, nullable=False)
     content = Column(String(12000), nullable=False)
+    hidden = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
 
     chat = relationship("Chat", back_populates="chat_messages")
+
+    def format_gpt(self):
+        return {
+            "content": self.content,
+            "role": self.role
+        }

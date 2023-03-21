@@ -1,5 +1,6 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 from app.models import Chat, ChatMessage
 import app.schemas as schemas
 
@@ -19,7 +20,9 @@ def create_chat(chat_data: schemas.ChatBase, bot_id: int, db: Session, current_u
 
 
 def get_chat_by_id(bot_id: int, chat_id: int, db: Session, current_user: schemas.User):
-    return db.query(Chat).filter(Chat.user_id == current_user.id, Chat.id == chat_id, Chat.bot_id == bot_id).first()
+    output = db.query(Chat).filter(Chat.user_id == current_user.id,
+                                   Chat.id == chat_id, Chat.bot_id == bot_id)
+    return output.first()
 
 
 def create_message(bot_id: int, chat_id: int, newMessage: schemas.ChatMessageCreate, db: Session, current_user: schemas.User):

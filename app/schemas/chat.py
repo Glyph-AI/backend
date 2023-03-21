@@ -1,4 +1,6 @@
 from pydantic import BaseModel
+from typing import Any
+from pydantic.utils import GetterDict
 from datetime import datetime
 from .chat_message import ChatMessage
 
@@ -12,7 +14,7 @@ class Chat(ChatBase):
     user_id: int
     bot_id: int
     created_at: datetime | None = None
-    chat_messages: list[ChatMessage]
+    chat_messages: list[ChatMessage] | None = None
     chat_token: str | None = None
 
     class Config:
