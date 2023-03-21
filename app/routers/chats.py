@@ -49,6 +49,8 @@ def handle_message_creation(bot_id, chat_id, messageJson, db, current_user):
 
     newChatJson = newChatData.__dict__
 
+    print("-----HERE-----")
+
     newChatJson["chat_messages"] = newChatData.chat_messages
 
     chatJson = jsonable_encoder(Chat(**newChatJson))
