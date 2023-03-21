@@ -2,7 +2,7 @@ from celery import Celery
 import openai
 import chardet
 import os
-from app.models import UserUpload, Embedding, Text
+from app.models import UserUpload, Embedding, Text, ChatMessage
 from app.dependencies import get_db
 from app.services import S3Service
 
@@ -22,7 +22,7 @@ def get_file_extension(filename):
 
 
 @celery.task(name="process_file")
-def process_file(user_upload_id):
+def process_file(user_upload_id, chat_id):
     # instantiate services
     db = next(get_db())
     s3 = S3Service()
@@ -72,6 +72,16 @@ def process_file(user_upload_id):
 
         db.add(new_e)
 
+    db.commit()
+
+    db_message = ChatMessage(
+        chat_id=chat_id,
+        role="system",
+        content=f"{filename} processing complete",
+        hidden=False
+    )
+
+    db.add(db_message)
     db.commit()
 
     return True

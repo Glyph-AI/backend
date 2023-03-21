@@ -31,6 +31,8 @@ async def auth_google(google_token: GoogleAuth, db: Session = Depends(get_db)):
             os.getenv("GOOGLE_CLIENT_ID"),
             clock_skew_in_seconds=10
         )
+
+        print(google_user)
         # check the aud claim for our client
         if not os.getenv("GOOGLE_CLIENT_ID") in google_user["aud"]:
             raise Errors.credentials_error
