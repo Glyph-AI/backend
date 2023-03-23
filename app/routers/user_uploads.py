@@ -14,7 +14,7 @@ from app.errors import Errors
 user_uploads_router = APIRouter(
     tags=["User Uploads API"], prefix="/bots/{bot_id}/chats/{chat_id}/user_upload")
 
-ALLOWED_FILE_EXTENSIONS = ["txt"]
+# ALLOWED_FILE_EXTENSIONS = ["txt"]
 
 
 def get_file_extension(filename):
@@ -28,8 +28,8 @@ def process_file_upload(upload_file_record: UserUpload):
 @user_uploads_router.post("/")
 def upload_file(bot_id: int, chat_id: int, file: UploadFile,  background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     file_extension = get_file_extension(file.filename)
-    if file_extension not in ALLOWED_FILE_EXTENSIONS:
-        raise Errors.invalid_file_type
+    # if file_extension not in ALLOWED_FILE_EXTENSIONS:
+    #     raise Errors.invalid_file_type
 
     # create a upload file record
     upload_file_record = user_upload_crud.create_user_upload(

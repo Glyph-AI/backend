@@ -4,7 +4,7 @@ import chardet
 import os
 from app.models import UserUpload, Embedding, Text, ChatMessage
 from app.dependencies import get_db
-from app.services import S3Service
+from app.services import S3Service, PdfProcessor, ImageProcessor, AudioProcessor
 
 celery = Celery(__name__)
 celery.conf.broker_url = os.environ.get(
@@ -34,6 +34,15 @@ def process_file(user_upload_id, chat_id):
     s3.download_file(local_path, f"{user_upload.s3_link}")
 
     file_extension = get_file_extension(local_path)
+    if file_extension == "pdf":
+        processor = PdfProcessor()
+        local_path = processor.process(local_path)
+    elif [".jpg", ".png", ".tiff"].includes(file_extension):
+        processor = ImageProcessor()
+        local_path = processor.process(local_path)
+    elif file_extension == ".mp3":
+        processor = AudioProcessor()
+        local_path = processor.process(local_path)
 
     # All files are .txt for now, so nothing to do here. We'll need some logic to process files though
     # read source file
@@ -57,7 +66,7 @@ def process_file(user_upload_id, chat_id):
     overlap = 500
     chunks = [decoded[i:i + chunk_size]
               for i in range(0, len(decoded), chunk_size-overlap)]
-
+    
     # create an embedding for each chunk
     for chunk in chunks:
         vector = openai.Embedding.create(
