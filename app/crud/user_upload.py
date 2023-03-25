@@ -1,9 +1,32 @@
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
-from app.models import UserUpload
+from app.models import UserUpload, Embedding, Text
 import app.schemas as schemas
 from app.services import S3Service
+from app.errors import Errors
 
+def get_user_uploads(db: Session, current_user: schemas.User):
+    return db.query(UserUpload).filter(UserUpload.user_id == current_user.id).all()
+
+def delete_user_upload(id: int, db: Session, current_user: schemas.User):
+    uu = db.query(UserUpload).get(id)
+    if uu.user_id != current_user.id:
+        raise Errors.credentials_error
+    # get texts
+    text_ids = [i.id for i in db.query(Text).filter(Text.user_upload_id == id).all()]
+    # get and delete embeddings
+    db.query(Embedding).filter(Embedding.text_id.in_(text_ids)).delete()
+    # Delete Texts
+    db.query(Text).filter(Text.user_upload_id == id).delete()
+    # Delete user_upload
+    s3 = S3Service()
+    s3.delete_file(uu.s3_link)
+
+    db.query(UserUpload).filter(UserUpload.id == id).delete()
+    db.commit()
+
+
+    return get_user_uploads(db, current_user)
 
 def create_user_upload(bot_id: int, db: Session, current_user: schemas.User, file: UploadFile):
     s3 = S3Service()
@@ -20,6 +43,7 @@ def create_user_upload(bot_id: int, db: Session, current_user: schemas.User, fil
         user_id=current_user.id,
         s3_link=f"{current_user.id}/{file.filename}",
         bot_id=bot_id,
+        filename=file.filename
     )
     db.add(db_user_upload)
     db.commit()

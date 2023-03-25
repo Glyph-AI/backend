@@ -3,8 +3,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, get_current_user
-from app.models import UserUpload
-from app.schemas import User, ChatMessageCreateHidden
+# from app.models import UserUpload
+from app.schemas import User, ChatMessageCreateHidden, UserUpload
 from app.crud import user_upload as user_upload_crud
 from app.crud import chat_message as chat_message_crud
 from app.worker import process_file
@@ -12,7 +12,7 @@ from app.worker import process_file
 from app.errors import Errors
 
 user_uploads_router = APIRouter(
-    tags=["User Uploads API"], prefix="/bots/{bot_id}/chats/{chat_id}/user_upload")
+    tags=["User Uploads API"], prefix="")
 
 # ALLOWED_FILE_EXTENSIONS = ["txt"]
 
@@ -25,8 +25,8 @@ def process_file_upload(upload_file_record: UserUpload):
     pass
 
 
-@user_uploads_router.post("/")
-def upload_file(bot_id: int, chat_id: int, file: UploadFile,  background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+@user_uploads_router.post("/bots/{bot_id}/chats/{chat_id}/user_upload")
+def upload_file(bot_id: int, chat_id: int, file: UploadFile, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     file_extension = get_file_extension(file.filename)
     # if file_extension not in ALLOWED_FILE_EXTENSIONS:
     #     raise Errors.invalid_file_type
@@ -49,3 +49,11 @@ def upload_file(bot_id: int, chat_id: int, file: UploadFile,  background_tasks: 
     task = process_file.delay(upload_file_record.id, chat_id)
 
     return JSONResponse({"task_id": task.id})
+
+@user_uploads_router.get("/user_uploads", response_model=list[UserUpload])
+def get_user_uploads(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return user_upload_crud.get_user_uploads(db, current_user)
+
+@user_uploads_router.delete("/user_uploads/{id}", response_model=list[UserUpload])
+def delete_user_upload(id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return user_upload_crud.delete_user_upload(id, db, current_user)

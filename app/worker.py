@@ -83,6 +83,8 @@ def process_file(user_upload_id, chat_id):
 
     db.commit()
 
+    user_upload.processed = True
+
     db_message = ChatMessage(
         chat_id=chat_id,
         role="system",
