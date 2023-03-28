@@ -20,6 +20,12 @@ async def get_user(id: int, db: Session = Depends(get_db), current_user: User = 
 
     return current_user
 
+@users_router.post("/logout")
+async def logout(db: Session = Depends(get_db)):
+    response = JSONResponse(content={"message": "Logged Out"})
+    response.delete_cookie(key="Authorization")
+    return response
+
 
 @users_router.post("/auth/google")
 async def auth_google(google_token: GoogleAuth, db: Session = Depends(get_db)):
