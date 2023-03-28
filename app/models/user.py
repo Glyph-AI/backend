@@ -20,6 +20,8 @@ class User(Base):
     s3_id_link = Column(String)
     profile_picture_location = Column(String)
     allow_public_profile_picture = Column(Boolean, default=False)
+    stripe_customer_id = Column(String)
+    is_current = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
 
@@ -28,6 +30,7 @@ class User(Base):
     texts = relationship("Text", back_populates="user")
     embeddings = relationship("Embedding", back_populates="user")
     chats = relationship("Chat", back_populates="user")
+    subscriptions = relationship("Subscription", back_populates="user")
 
     @hybrid_property
     def password(self):
@@ -41,3 +44,10 @@ class User(Base):
 
     def check_password(self, plaintext):
         return bcrypt.checkpw(plaintext.encode("utf-8"), self._password.encode("utf-8"))
+
+    @property
+    def subscribed(self):
+        return len(self.active_subscriptions()) > 0
+
+    def active_subscriptions(self):
+        return [s for s in self.subscriptions if s.deleted_at == None]

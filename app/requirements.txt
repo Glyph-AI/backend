@@ -24,3 +24,4 @@ chardet
 pdf2image
 pillow
 pytesseract
+stripe

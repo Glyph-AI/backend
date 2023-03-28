@@ -5,3 +5,5 @@ from .embedding import Embedding
 from .text import Text
 from .user_upload import UserUpload
 from .user import User
+from .subscription import Subscription
+from .price_tier import PriceTier
