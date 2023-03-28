@@ -9,6 +9,7 @@ from app.dependencies import get_db, get_current_user, create_access_token
 from app.schemas import UserCreateSSO, User, GoogleAuth
 import app.crud.user as user_crud
 from app.errors import Errors
+from app.services import StripeService
 
 users_router = APIRouter(tags=["User API"])
 
@@ -19,6 +20,7 @@ async def get_user(id: int, db: Session = Depends(get_db), current_user: User = 
         raise Errors.not_authorized_error
 
     return current_user
+
 
 @users_router.post("/logout")
 async def logout(db: Session = Depends(get_db)):
@@ -59,6 +61,9 @@ async def auth_google(google_token: GoogleAuth, db: Session = Depends(get_db)):
 
             user_create_data = UserCreateSSO(**user_data)
             db_user = user_crud.create_user(db, user_create_data)
+
+            stripe_svc = StripeService(db)
+            stripe_svc.create_customer(db_user)
 
         # generate access_token
         access_token = create_access_token(data={"sub": db_user.email})
