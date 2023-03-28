@@ -21,6 +21,7 @@ async def get_user(id: int, db: Session = Depends(get_db), current_user: User = 
 
     return current_user
 
+
 @users_router.post("/logout")
 async def logout(db: Session = Depends(get_db)):
     response = JSONResponse(content={"message": "Logged Out"})
@@ -61,9 +62,8 @@ async def auth_google(google_token: GoogleAuth, db: Session = Depends(get_db)):
             user_create_data = UserCreateSSO(**user_data)
             db_user = user_crud.create_user(db, user_create_data)
 
-            stripe_svc = StripeService()
-            stripe_svc.create_customer(db_user, db)
-
+            stripe_svc = StripeService(db)
+            stripe_svc.create_customer(db_user)
 
         # generate access_token
         access_token = create_access_token(data={"sub": db_user.email})

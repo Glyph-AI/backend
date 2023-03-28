@@ -17,5 +17,4 @@ async def get_user_bots(db: Session = Depends(get_db), current_user: User = Depe
 @bots_router.post("/", response_model=Bot)
 async def create_bot(bot_data: BotCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     new_bot_data = bot_crud.create_bot(db, current_user, bot_data)
-    print(new_bot_data)
     return new_bot_data
