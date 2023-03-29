@@ -11,7 +11,7 @@ class Embedding(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     bot_id = Column(Integer, ForeignKey("bots.id"))
-    text_id = Column(Integer, ForeignKey("texts.id"))
+    text_id = Column(Integer, ForeignKey("texts.id"), nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     vector = Column(Vector(1536), nullable=False)
     content = Column(String(4000), nullable=False)

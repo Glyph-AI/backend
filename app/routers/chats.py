@@ -82,9 +82,9 @@ async def chat_endpoint(bot_id: int, chat_id: int, chat_token: str, websocket: W
                     bot_id, chat_id, messageJson, db, current_user)
 
                 # create instance of Glyph
-                glyph = Glyph()
+                glyph = Glyph(db, bot_id, chat_id, current_user.id)
                 message = glyph.process_message(
-                    messageJson.content, bot_id, chat_id, db)
+                    messageJson.content)
                 # process and respond
                 messageJson = ChatMessageCreate(
                     **{"content": message, "role": "assistant", "chat_id": chat_id})

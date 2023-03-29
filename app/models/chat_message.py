@@ -13,6 +13,7 @@ class ChatMessage(Base):
     role = Column(String, nullable=False)
     content = Column(String(12000), nullable=False)
     hidden = Column(Boolean, default=False)
+    archived = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
 
@@ -23,3 +24,6 @@ class ChatMessage(Base):
             "content": self.content,
             "role": self.role
         }
+
+    def format_archive(self):
+        return f"{self.role}: {self.content}"
