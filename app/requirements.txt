@@ -25,3 +25,5 @@ pdf2image
 pillow
 pytesseract
 stripe
+langchain
+google-search-results

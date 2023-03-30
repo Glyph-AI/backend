@@ -2,7 +2,7 @@ import openai
 import os
 
 openai.api_key = os.environ.get(
-    "OPENAI_KEY", "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")
+    "OPENAI_API_KEY", "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")
 
 class AudioProcessor():
     def process(self, filepath):
