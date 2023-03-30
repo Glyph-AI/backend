@@ -28,7 +28,7 @@ class ChatMessage(Base):
 
     def format_archive(self):
         return f"{self.role}: {self.content}"
-    
+
     def format_langchain(self):
         if self.role == "assistant":
             return AIMessage(content=self.content)

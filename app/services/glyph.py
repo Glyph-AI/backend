@@ -2,12 +2,20 @@ import time
 import openai
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
-from langchain import LLMChain, OpenAI
+from langchain import LLMChain
+from langchain.llms.fake import FakeListLLM
+from langchain.agents import load_tools, Tool, AgentExecutor
+from langchain.agents.chat.base import ChatAgent
 from langchain.utilities import GoogleSearchAPIWrapper
-from langchain.agents import Tool, ZeroShotAgent, AgentExecutor
 from langchain.chat_models import ChatOpenAI
+from langchain.agents import Tool
 from langchain.memory import ConversationBufferMemory
+from langchain.chat_models import ChatOpenAI
+from langchain.utilities import SerpAPIWrapper
+from langchain.agents import initialize_agent
 import os
+import json
+from typing import Optional, Tuple
 
 from app.models import Embedding, ChatMessage, Text
 import app.schemas as schemas
@@ -18,31 +26,13 @@ openai.api_key = os.environ.get(
 
 search = GoogleSearchAPIWrapper()
 
-search_tool = Tool(
-    name="Google Search",
-    func=search.run,
-    description="Useful for when you need to answer questions and the information is not included in the context of the question."
-)
-
-# llm = ChatOpenAI(temperature=0)
-
-prefix = """Have a conversation with a human, answering the following questions as best you can. You have access to the following tools:"""
-suffix = """Begin!"
-
-{chat_history}
-Question: {input}
-{agent_scratchpad}"""
-
-tools = [search_tool, "human"]
-
-prompt = ZeroShotAgent.create_prompt(
-    tools, 
-    prefix=prefix, 
-    suffix=suffix, 
-    input_variables=["input", "chat_history", "agent_scratchpad"]
-)
-
-llm_chain = LLMChain(llm=ChatOpenAI(temperature=0), prompt=prompt)
+tools = [
+    Tool(
+        name="Google Search",
+        func=search.run,
+        description="Useful for when you need to answer questions and the information is not included in the context for the question."
+    )
+]
 
 
 class Glyph:
@@ -63,10 +53,11 @@ class Glyph:
         top = self.db.query(Embedding).filter(
             Embedding.bot_id == self.bot_id).order_by(Embedding.vector.l2_distance(vector)).limit(3).all()
         context_array = [i.content for i in top]
-        context = " | ".join(context_array)
-        print("-" * 80)
-        print(len(context))
-        return context
+
+        if len(context_array) == 0:
+            return None
+        else:
+            return " | ".join(context_array)
 
     def get_last_n_messages(self, n: int):
         messages = self.db.query(ChatMessage).filter(
@@ -75,7 +66,9 @@ class Glyph:
             ChatMessage.created_at.desc()
         ).limit(n)
 
-        return messages
+        formatted_messages = [i.format_langchain() for i in messages]
+
+        return formatted_messages[:-1]
 
     def save_context(self, context: str):
         new_message = schemas.ChatMessageCreateHidden(
@@ -92,27 +85,21 @@ class Glyph:
 
     def query_gpt(self, message: str):
         last_n = self.get_last_n_messages(self.message_history_to_include)
-        
-        history = ConversationBufferMemory(memory_key="chat_history")
-        for m in last_n:
-            if m.role == "assistant":
-                history.chat_memory.add_ai_message(m.content)
-            elif m.role == "user":
-                history.chat_memory.add_user_message(m.content)
-
-        print(history.load_memory_variables({}))
-        # return "debug"
-        agent = ZeroShotAgent(llm_chain=llm_chain, tools=tools, verbose=True)
-        agent_chain = AgentExecutor.from_agent_and_tools(agent=agent, tools=tools, verbose=True, memory=history)
-        resp = agent_chain.run(input=message)
+        memory = ConversationBufferMemory(
+            memory_key="chat_history", return_messages=True)
+        memory.chat_memory.messages = last_n
+        llm = ChatOpenAI(temperature=0)
+        agent_chain = initialize_agent(
+            tools, llm, agent="chat-conversational-react-description", verbose=True, memory=memory)
+        resp = agent_chain.run(message)
 
         return resp
 
     def process_message(self, incoming_message: str):
         # does the new message push our non-hidden messages over the character threshold?
         unarchived = self.db.query(ChatMessage).filter(
-            or_(ChatMessage.archived == False, ChatMessage.archived == None), 
-            ChatMessage.hidden == False, 
+            or_(ChatMessage.archived == False, ChatMessage.archived == None),
+            ChatMessage.hidden == False,
             ChatMessage.chat_id == self.chat_id
         ).order_by(
             ChatMessage.created_at.desc()
@@ -125,11 +112,12 @@ class Glyph:
         if unarchived_chars > self.history_threshold:
             self.embed_message_history(unarchived)
 
-
         embedding = self.embed_message(incoming_message)
-        
+
         context = self.build_context(embedding)
-        self.save_context(context)
+        if context:
+            self.save_context(context)
+
         answer = self.query_gpt(incoming_message)
 
         return answer
@@ -154,7 +142,7 @@ class Glyph:
 
         for m in message_list:
             m.archived = True
-        
+
         self.db.commit()
 
         return True
