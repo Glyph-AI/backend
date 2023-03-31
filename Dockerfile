@@ -9,7 +9,7 @@ RUN pip install awscli
 WORKDIR /app
 
 # install dependencies
-COPY ../ .
+COPY . .
 RUN pip install -r app/requirements.txt
 # start the app
 ENTRYPOINT ["/bin/sh", "./startup.sh"]
