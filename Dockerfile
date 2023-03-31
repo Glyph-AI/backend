@@ -4,7 +4,6 @@ FROM python:3.10
 RUN apt-get update
 RUN apt-get -y install postgresql-client
 RUN apt-get install poppler-utils tesseract-ocr ffmpeg libsm6 libxext6  -y
-RUN pip install awscli
 # set workdir
 WORKDIR /app
 
