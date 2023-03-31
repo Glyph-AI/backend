@@ -2,14 +2,37 @@ import time
 import openai
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
+from langchain import LLMChain
+from langchain.llms.fake import FakeListLLM
+from langchain.agents import load_tools, Tool, AgentExecutor
+from langchain.agents.chat.base import ChatAgent
+from langchain.utilities import GoogleSearchAPIWrapper
+from langchain.chat_models import ChatOpenAI
+from langchain.agents import Tool
+from langchain.memory import ConversationBufferMemory
+from langchain.chat_models import ChatOpenAI
+from langchain.utilities import SerpAPIWrapper
+from langchain.agents import initialize_agent
 import os
+import json
+from typing import Optional, Tuple
 
 from app.models import Embedding, ChatMessage, Text
 import app.schemas as schemas
 from app.crud import chat_message as chat_message_crud
 
 openai.api_key = os.environ.get(
-    "OPENAI_KEY", "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")
+    "OPENAI_API_KEY", "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")
+
+search = GoogleSearchAPIWrapper()
+
+tools = [
+    Tool(
+        name="Google Search",
+        func=search.run,
+        description="Useful for when you need to answer questions and the information is not included in the context for the question."
+    )
+]
 
 
 class Glyph:
@@ -27,24 +50,25 @@ class Glyph:
         return query_embed
 
     def build_context(self, vector: list):
-        top_3 = self.db.query(Embedding).filter(
+        top = self.db.query(Embedding).filter(
             Embedding.bot_id == self.bot_id).order_by(Embedding.vector.l2_distance(vector)).limit(3).all()
-        context_array = [i.content for i in top_3]
-        context = " | ".join(context_array)
-        print("-" * 80)
-        print(len(context))
-        return context
+        context_array = [i.content for i in top]
+
+        if len(context_array) == 0:
+            return None
+        else:
+            return " | ".join(context_array)
 
     def get_last_n_messages(self, n: int):
-        embeddings = self.db.query(ChatMessage).filter(
+        messages = self.db.query(ChatMessage).filter(
             ChatMessage.chat_id == self.chat_id
         ).order_by(
             ChatMessage.created_at.desc()
         ).limit(n)
 
-        messages = [i.format_gpt() for i in embeddings]
+        formatted_messages = [i.format_langchain() for i in messages]
 
-        return messages
+        return formatted_messages[:-1]
 
     def save_context(self, context: str):
         new_message = schemas.ChatMessageCreateHidden(
@@ -61,27 +85,21 @@ class Glyph:
 
     def query_gpt(self, message: str):
         last_n = self.get_last_n_messages(self.message_history_to_include)
-        # add context to chat_messages as hidden
-
-        chatdata = [
-            {"role": "system",
-                "content": "You are a helpful Virtual Intelligence named Glyph."},
-            *last_n,
-            {"role": "system", "content": f"Based on the above context and your existing knowledge, answer the following question: {message}"},
-        ]
-
-        resp = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=chatdata
-        )["choices"][0]["message"]["content"]
+        memory = ConversationBufferMemory(
+            memory_key="chat_history", return_messages=True)
+        memory.chat_memory.messages = last_n
+        llm = ChatOpenAI(temperature=0)
+        agent_chain = initialize_agent(
+            tools, llm, agent="chat-conversational-react-description", verbose=True, memory=memory)
+        resp = agent_chain.run(message)
 
         return resp
 
     def process_message(self, incoming_message: str):
         # does the new message push our non-hidden messages over the character threshold?
         unarchived = self.db.query(ChatMessage).filter(
-            or_(ChatMessage.archived == False, ChatMessage.archived == None), 
-            ChatMessage.hidden == False, 
+            or_(ChatMessage.archived == False, ChatMessage.archived == None),
+            ChatMessage.hidden == False,
             ChatMessage.chat_id == self.chat_id
         ).order_by(
             ChatMessage.created_at.desc()
@@ -94,11 +112,12 @@ class Glyph:
         if unarchived_chars > self.history_threshold:
             self.embed_message_history(unarchived)
 
-
         embedding = self.embed_message(incoming_message)
-        
+
         context = self.build_context(embedding)
-        self.save_context(context)
+        if context:
+            self.save_context(context)
+
         answer = self.query_gpt(incoming_message)
 
         return answer
@@ -123,7 +142,7 @@ class Glyph:
 
         for m in message_list:
             m.archived = True
-        
+
         self.db.commit()
 
         return True

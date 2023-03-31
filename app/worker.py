@@ -14,7 +14,7 @@ celery.conf.result_backend = os.environ.get(
 
 environment = os.environ.get("ENVIRONMENT", "development")
 openai.api_key = os.environ.get(
-    "OPENAI_KEY", "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")
+    "OPENAI_API_KEY", "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")
 
 
 def get_file_extension(filename):
