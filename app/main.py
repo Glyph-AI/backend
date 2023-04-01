@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import os
 
 from app.routers import *
+
+FRONTEND_URL = os.getenv("FRONTEND_URL", "")
 
 
 def create_app():
@@ -13,7 +16,9 @@ def create_app():
         "http://localhost:3001",
         "localhost:3001",
         "http://localhost:3002",
-        "localhost:3002"
+        "localhost:3002",
+        FRONTEND_URL,
+        f"https://{FRONTEND_URL}"
     ]
 
     app.add_middleware(
