@@ -21,6 +21,7 @@ class S3Service:
                                      region_name="us-east-1").Bucket(self.bucket)
         else:
             self.s3 = boto3.resource(service_name='s3',
+                                     endpoint_url=self.endpoint,
                                      aws_access_key_id=self.access_key,
                                      aws_secret_access_key=self.secret_key,
                                      region_name="us-east-1").Bucket(self.bucket)
@@ -47,12 +48,12 @@ class S3Service:
         self.s3.download_file(filename, local_path)
 
         return True
-    
+
     def delete_file(self, filepath):
         boto3.resource(service_name='s3',
-                        endpoint_url=self.endpoint,
-                        aws_access_key_id=self.access_key,
-                        aws_secret_access_key=self.secret_key,
-                        region_name="us-east-1").Object(self.bucket, filepath).delete()
+                       endpoint_url=self.endpoint,
+                       aws_access_key_id=self.access_key,
+                       aws_secret_access_key=self.secret_key,
+                       region_name="us-east-1").Object(self.bucket, filepath).delete()
 
         return True
