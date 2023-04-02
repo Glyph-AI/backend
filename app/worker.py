@@ -26,6 +26,12 @@ def process_file(user_upload_id, chat_id):
     # instantiate services
     print(f"--LOG: Starting Job on user_upload: {user_upload_id}")
     db = next(get_db())
+
+    s3 = S3Service()
+    user_upload = db.query(UserUpload).get(user_upload_id)
+    # get the source file
+    filename = user_upload.s3_link.split("/")[1]
+    local_path = f"/temp/{filename}"
     db_message = ChatMessage(
         chat_id=chat_id,
         role="system",
@@ -35,11 +41,6 @@ def process_file(user_upload_id, chat_id):
 
     db.add(db_message)
     db.commit()
-    s3 = S3Service()
-    user_upload = db.query(UserUpload).get(user_upload_id)
-    # get the source file
-    filename = user_upload.s3_link.split("/")[1]
-    local_path = f"/temp/{filename}"
     s3.create_directory("/temp")
     s3.download_file(local_path, f"{user_upload.s3_link}")
 
