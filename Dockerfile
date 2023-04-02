@@ -3,7 +3,7 @@ FROM python:3.10
 # install postgres client
 RUN apt-get update
 RUN apt-get -y install postgresql-client
-RUN apt-get install poppler-utils tesseract-ocr ffmpeg libsm6 libxext6 libtesseract-dev  libtesseract-dev pkg-config -y
+RUN apt-get install poppler-utils tesseract-ocr ffmpeg libsm6 libxext6 libtesseract-dev libtesseract-dev pkg-config -y
 # set workdir
 WORKDIR /app
 

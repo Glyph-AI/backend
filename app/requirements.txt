@@ -27,3 +27,4 @@ pytesseract
 stripe
 langchain
 google-search-results
+tesserocr
