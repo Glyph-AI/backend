@@ -26,6 +26,15 @@ def process_file(user_upload_id, chat_id):
     # instantiate services
     print(f"--LOG: Starting Job on user_upload: {user_upload_id}")
     db = next(get_db())
+    db_message = ChatMessage(
+        chat_id=chat_id,
+        role="system",
+        content=f"{filename} processing started",
+        hidden=False
+    )
+
+    db.add(db_message)
+    db.commit()
     s3 = S3Service()
     user_upload = db.query(UserUpload).get(user_upload_id)
     # get the source file
