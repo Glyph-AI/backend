@@ -24,6 +24,7 @@ def get_file_extension(filename):
 @celery.task(name="process_file")
 def process_file(user_upload_id, chat_id):
     # instantiate services
+    print(f"--LOG: Starting Job on user_upload: {user_upload_id}")
     db = next(get_db())
     s3 = S3Service()
     user_upload = db.query(UserUpload).get(user_upload_id)
@@ -33,14 +34,16 @@ def process_file(user_upload_id, chat_id):
     s3.create_directory("/temp")
     s3.download_file(local_path, f"{user_upload.s3_link}")
 
+    print(f"User Upload {user_upload_id}: Processing File to text")
+
     file_extension = get_file_extension(local_path)
     if file_extension == "pdf":
         processor = PdfProcessor()
         local_path = processor.process(local_path)
-    elif [".jpg", ".png", ".tiff"].includes(file_extension):
+    elif ["jpg", "png", "tiff"].includes(file_extension):
         processor = ImageProcessor()
         local_path = processor.process(local_path)
-    elif file_extension == ".mp3":
+    elif file_extension == "mp3":
         processor = AudioProcessor()
         local_path = processor.process(local_path)
 
@@ -62,11 +65,13 @@ def process_file(user_upload_id, chat_id):
     db.commit()
     db.refresh(new_text)
 
+    print(f"User Upload {user_upload_id}: Embedding File")
+
     chunk_size = 2000
     overlap = 500
     chunks = [decoded[i:i + chunk_size]
               for i in range(0, len(decoded), chunk_size-overlap)]
-    
+
     # create an embedding for each chunk
     for chunk in chunks:
         vector = openai.Embedding.create(
@@ -82,6 +87,9 @@ def process_file(user_upload_id, chat_id):
         db.add(new_e)
 
     db.commit()
+
+    print(
+        f"User Upload {user_upload_id}: Processing Complete. Generating User Notification")
 
     user_upload.processed = True
 
