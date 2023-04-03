@@ -14,6 +14,7 @@ class UserUpload(Base):
     filename = Column(String)
     bot_id = Column(Integer, ForeignKey("bots.id"))
     processed = Column(Boolean, default=False)
+    include_in_context = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
 

@@ -19,7 +19,7 @@ import json
 from typing import Optional, Tuple
 from datetime import datetime
 
-from app.models import Embedding, ChatMessage, Text
+from app.models import Embedding, ChatMessage, Text, UserUpload
 import app.schemas as schemas
 from app.crud import chat_message as chat_message_crud
 
@@ -52,8 +52,8 @@ class Glyph:
         return query_embed
 
     def build_context(self, vector: list):
-        top = self.db.query(Embedding).filter(
-            Embedding.bot_id == self.bot_id).order_by(Embedding.vector.l2_distance(vector)).limit(3).all()
+        top = self.db.query(Embedding).join(Text).join(UserUpload).filter(
+            UserUpload.include_in_context == True, Embedding.bot_id == self.bot_id).order_by(Embedding.vector.l2_distance(vector)).limit(3).all()
         context_array = [i.content for i in top]
 
         if len(context_array) == 0:
@@ -92,7 +92,7 @@ class Glyph:
         memory = ConversationBufferMemory(
             memory_key="chat_history", return_messages=True)
         memory.chat_memory.messages = last_n
-        llm = ChatOpenAI(temperature=0)
+        llm = ChatOpenAI(temperature=0.7)
         agent_chain = initialize_agent(
             tools, llm, agent="chat-conversational-react-description", verbose=True, memory=memory)
         resp = agent_chain.run(message)

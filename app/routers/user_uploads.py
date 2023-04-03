@@ -34,7 +34,7 @@ def upload_file(bot_id: int, chat_id: int, file: UploadFile, db: Session = Depen
     # create a upload file record
     upload_file_record = user_upload_crud.create_user_upload(
         bot_id, db, current_user, file)
-    
+
     # create message for upload
     upload_message = ChatMessageCreateHidden(
         role="system",
@@ -50,10 +50,17 @@ def upload_file(bot_id: int, chat_id: int, file: UploadFile, db: Session = Depen
 
     return JSONResponse({"task_id": task.id})
 
+
 @user_uploads_router.get("/user_uploads", response_model=list[UserUpload])
 def get_user_uploads(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return user_upload_crud.get_user_uploads(db, current_user)
 
+
 @user_uploads_router.delete("/user_uploads/{id}", response_model=list[UserUpload])
 def delete_user_upload(id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return user_upload_crud.delete_user_upload(id, db, current_user)
+
+
+@user_uploads_router.patch("/user_uploads/{id}", response_model=list[UserUpload])
+def update_context_status(id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return user_upload_crud.update_context_status(id, db, current_user)

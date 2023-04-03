@@ -5,15 +5,18 @@ import app.schemas as schemas
 from app.services import S3Service
 from app.errors import Errors
 
+
 def get_user_uploads(db: Session, current_user: schemas.User):
     return db.query(UserUpload).filter(UserUpload.user_id == current_user.id).all()
+
 
 def delete_user_upload(id: int, db: Session, current_user: schemas.User):
     uu = db.query(UserUpload).get(id)
     if uu.user_id != current_user.id:
         raise Errors.credentials_error
     # get texts
-    text_ids = [i.id for i in db.query(Text).filter(Text.user_upload_id == id).all()]
+    text_ids = [i.id for i in db.query(Text).filter(
+        Text.user_upload_id == id).all()]
     # get and delete embeddings
     db.query(Embedding).filter(Embedding.text_id.in_(text_ids)).delete()
     # Delete Texts
@@ -25,8 +28,8 @@ def delete_user_upload(id: int, db: Session, current_user: schemas.User):
     db.query(UserUpload).filter(UserUpload.id == id).delete()
     db.commit()
 
-
     return get_user_uploads(db, current_user)
+
 
 def create_user_upload(bot_id: int, db: Session, current_user: schemas.User, file: UploadFile):
     s3 = S3Service()
@@ -50,3 +53,15 @@ def create_user_upload(bot_id: int, db: Session, current_user: schemas.User, fil
     db.refresh(db_user_upload)
 
     return db_user_upload
+
+
+def update_context_status(id: int, db: Session, current_user: schemas.User):
+    uu = db.query(UserUpload).get(id)
+    if uu.user_id != current_user.id:
+        raise Errors.credentials_error
+
+    uu.include_in_context = not (uu.include_in_context)
+
+    db.commit()
+
+    return get_user_uploads(db, current_user)
