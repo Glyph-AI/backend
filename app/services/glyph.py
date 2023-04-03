@@ -10,7 +10,7 @@ from langchain.utilities import GoogleSearchAPIWrapper
 from langchain.chat_models import ChatOpenAI
 from langchain.agents import Tool
 from langchain.memory import ConversationBufferMemory
-from langchain.schema import SystemMessage
+from langchain.schema import SystemMessage, HumanMessage, AIMessage
 from langchain.chat_models import ChatOpenAI
 from langchain.utilities import SerpAPIWrapper
 from langchain.agents import initialize_agent
@@ -88,7 +88,7 @@ class Glyph:
     def query_gpt(self, message: str):
         last_n = self.get_last_n_messages(self.message_history_to_include)
         last_n = [SystemMessage(
-            content=f"You are Glyph, a helpful AI assistant. Todays date is: {datetime.today().strftime('%Y-%m-%d')}")] + last_n
+            content=f"You are Glyph, a helpful AI assistant. Current date and time are: {datetime.today().strftime('%Y-%m-%d %H:%M:%S')}")] + last_n
         memory = ConversationBufferMemory(
             memory_key="chat_history", return_messages=True)
         memory.chat_memory.messages = last_n
