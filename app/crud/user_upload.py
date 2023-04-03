@@ -22,8 +22,12 @@ def delete_user_upload(id: int, db: Session, current_user: schemas.User):
     # Delete Texts
     db.query(Text).filter(Text.user_upload_id == id).delete()
     # Delete user_upload
-    s3 = S3Service()
-    s3.delete_file(uu.s3_link)
+    # check if the file is used by any other uploads
+    same_file = db.query(UserUpload).filter(
+        UserUpload.s3_link == uu.s3_link).all()
+    if len(same_file) == 0:
+        s3 = S3Service()
+        s3.delete_file(uu.s3_link)
 
     db.query(UserUpload).filter(UserUpload.id == id).delete()
     db.commit()

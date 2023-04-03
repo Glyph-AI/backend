@@ -50,10 +50,13 @@ class S3Service:
         return True
 
     def delete_file(self, filepath):
-        boto3.resource(service_name='s3',
-                       endpoint_url=self.endpoint,
-                       aws_access_key_id=self.access_key,
-                       aws_secret_access_key=self.secret_key,
-                       region_name="us-east-1").Object(self.bucket, filepath).delete()
+        try:
+            boto3.resource(service_name='s3',
+                           endpoint_url=self.endpoint,
+                           aws_access_key_id=self.access_key,
+                           aws_secret_access_key=self.secret_key,
+                           region_name="us-east-1").Object(self.bucket, filepath).delete()
+        except Exception as e:
+            print(f"FILE DELETION FAILED: {e}")
 
         return True
