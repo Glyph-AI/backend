@@ -12,7 +12,6 @@ from langchain.agents import Tool
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import SystemMessage, HumanMessage, AIMessage
 from langchain.chat_models import ChatOpenAI
-from langchain.utilities import SerpAPIWrapper
 from langchain.agents import initialize_agent
 import os
 import json
@@ -26,16 +25,6 @@ from app.crud import chat_message as chat_message_crud
 openai.api_key = os.environ.get(
     "OPENAI_API_KEY", "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")
 
-search = GoogleSearchAPIWrapper()
-
-tools = [
-    Tool(
-        name="Google Search",
-        func=search.run,
-        description="Useful for when you need to answer questions and the information is not included in the context for the question."
-    )
-]
-
 
 class Glyph:
     def __init__(self, db: Session, bot_id: int, chat_id: int, user_id: int):
@@ -43,15 +32,30 @@ class Glyph:
         self.bot_id = bot_id
         self.chat_id = chat_id
         self.user_id = user_id
-        self.message_history_to_include = 5
+        self.message_history_to_include = 15
         self.history_threshold = 2000
+        search = GoogleSearchAPIWrapper()
+
+        self.tools = [
+            Tool(
+                name="Document Search",
+                func=self.build_context,
+                description="Use this tool first before using Google Search. Useful for finding answers to user questions."
+            ),
+            Tool(
+                name="Google Search",
+                func=search.run,
+                description="Useful for when you need to answer questions and the information is not included in the context for the question. Try this tool if Document Search does not return a useful answer."
+            )
+        ]
 
     def embed_message(self, message: str):
         query_embed = openai.Embedding.create(
             input=message, model="text-embedding-ada-002")['data'][0]['embedding']
         return query_embed
 
-    def build_context(self, vector: list):
+    def build_context(self, message: str):
+        vector = self.embed_message(message)
         top = self.db.query(Embedding).join(Text).join(UserUpload).filter(
             UserUpload.include_in_context == True, Embedding.bot_id == self.bot_id).order_by(Embedding.vector.l2_distance(vector)).limit(3).all()
         context_array = [i.content for i in top]
@@ -92,9 +96,9 @@ class Glyph:
         memory = ConversationBufferMemory(
             memory_key="chat_history", return_messages=True)
         memory.chat_memory.messages = last_n
-        llm = ChatOpenAI(temperature=0.7)
+        llm = ChatOpenAI(temperature=0)
         agent_chain = initialize_agent(
-            tools, llm, agent="chat-conversational-react-description", verbose=True, memory=memory)
+            self.tools, llm, agent="chat-conversational-react-description", verbose=True, memory=memory)
         resp = agent_chain.run(message)
 
         return resp
@@ -116,11 +120,11 @@ class Glyph:
         if unarchived_chars > self.history_threshold:
             self.embed_message_history(unarchived)
 
-        embedding = self.embed_message(incoming_message)
+        # embedding = self.embed_message(incoming_message)
 
-        context = self.build_context(embedding)
-        if context:
-            self.save_context(context)
+        # context = self.build_context(embedding)
+        # if context:
+        #     self.save_context(context)
 
         answer = self.query_gpt(incoming_message)
 

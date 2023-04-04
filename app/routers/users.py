@@ -72,9 +72,7 @@ async def auth_google(google_token: GoogleAuth, db: Session = Depends(get_db)):
         response.set_cookie(
             key="access_token",
             value=f"Bearer {access_token}",
-            httponly=True,
-            max_age=1800,
-            expires=1800
+            httponly=True
         )
 
         return response

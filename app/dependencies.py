@@ -69,7 +69,7 @@ class OAuth2PasswordBearerWithCookie(OAuth2):
 
 
 oauth2_scheme = OAuth2PasswordBearerWithCookie(
-    tokenUrl="/token", scheme_name="garage_oauth2_scheme")
+    tokenUrl="/token", scheme_name="oauth2_scheme")
 
 
 def get_db():
@@ -106,7 +106,7 @@ def create_access_token(data: dict):
     to_encode = data.copy()
     expires_delta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
-    expire = datetime.utcnow() + timedelta(minutes=600)
+    expire = datetime.utcnow() + expires_delta
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
