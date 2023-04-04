@@ -56,8 +56,9 @@ class Glyph:
 
     def build_context(self, message: str):
         vector = self.embed_message(message)
+        print(message)
         top = self.db.query(Embedding).join(Text).join(UserUpload).filter(
-            UserUpload.include_in_context == True, Embedding.bot_id == self.bot_id).order_by(Embedding.vector.l2_distance(vector)).limit(3).all()
+            UserUpload.include_in_context == True, Embedding.bot_id == self.bot_id, Embedding.vector.l2_distance(vector) > 0.8).order_by(Embedding.vector.l2_distance(vector)).limit(3).all()
         context_array = [i.content for i in top]
 
         if len(context_array) == 0:
