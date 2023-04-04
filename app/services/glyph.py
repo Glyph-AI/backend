@@ -41,12 +41,12 @@ class Glyph:
                 name="Document Search",
                 func=self.build_context,
                 description="Use this tool first before using Google Search. Useful for finding answers to user questions."
-            ),
-            Tool(
-                name="Google Search",
-                func=search.run,
-                description="Useful for when you need to answer questions and the information is not included in the context for the question. Try this tool if Document Search does not return a useful answer."
             )
+            # Tool(
+            #     name="Google Search",
+            #     func=search.run,
+            #     description="Useful for when you need to answer questions and the information is not included in the context for the question. Try this tool if Document Search does not return a useful answer."
+            # )
         ]
 
     def embed_message(self, message: str):
@@ -54,17 +54,80 @@ class Glyph:
             input=message, model="text-embedding-ada-002")['data'][0]['embedding']
         return query_embed
 
+    def chatgpt_request(self, query_object):
+        return openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[query_object]
+        )["choices"][0]["message"]["content"]
+
+    def boolean_chatgpt(self, response: str):
+        try:
+            json_response = json.loads(response)
+        except Exception as e:
+            json_response = {"response": "NO"}
+
+        if json_response["response"] == "NO":
+            return False
+
+        return True
+
+    def ask_model_about_information(self, message: str, context: str):
+        query_object = {
+            "role": "user",
+            "content": f"""Context: {context}.\n\nQuestion: {message}\n\nGiven the preceeding context, determine whether or not the answer to the question is contained within the context. Your response should be in the form of a JSON Object like the following example where $ANSWER is either "YES" or "NO"\n\n```\n    {{\n        "response": "$ANSWER"\n    }}\n```\n\nProvide only the object, do not provide any additional explanation."""
+        }
+
+        return self.boolean_chatgpt(self.chatgpt_request(query_object))
+
+    def query_references_uploaded_file(self, message: str):
+        user_files = self.db.query(UserUpload).filter(
+            UserUpload.bot_id == self.bot_id).all()
+        file_names = [i.filename for i in user_files]
+        joined_filenames = ", ".join(file_names)
+
+        query_object = {
+            "role": "user",
+            "content": f"""File List: {joined_filenames}.\n\nQuestion: {message}\n\nGiven the preceeding list of files, determine whether or not the question contains a reference to one of the files listed.\nYour response should be in the form of a JSON Object like the following example where $ANSWER is either "YES" or "NO", and $FILENAME is a file from the list given or an empty string if no file is given.\n\n```\n\n    {{\n        "response": "$ANSWER",\n        "filename": "$FILENAME"\n    }}\n```\n\nProvide only the object, do not provide any additional explanation."""
+        }
+
+        response = self.chatgpt_request(query_object)
+        try:
+            json_response = json.loads(response)
+        except:
+            json_response = {"response": "NO", "filename": ""}
+
+        if json_response["response"] == "NO":
+            return False, ""
+
+        return True, json_response["filename"]
+
     def build_context(self, message: str):
         vector = self.embed_message(message)
-        print(message)
-        top = self.db.query(Embedding).join(Text).join(UserUpload).filter(
-            UserUpload.include_in_context == True, Embedding.bot_id == self.bot_id, Embedding.vector.l2_distance(vector) > 0.8).order_by(Embedding.vector.l2_distance(vector)).limit(3).all()
-        context_array = [i.content for i in top]
-
-        if len(context_array) == 0:
-            return None
+        ref, referenced_file = self.query_references_uploaded_file(message)
+        print(ref, referenced_file)
+        top = None
+        if ref:
+            top = self.db.query(Embedding).join(Text).join(UserUpload).filter(
+                UserUpload.include_in_context == True, UserUpload.filename == referenced_file, Embedding.bot_id == self.bot_id).order_by(Embedding.vector.l2_distance(vector)).limit(3).all()
         else:
-            return " | ".join(context_array)
+            top = self.db.query(Embedding).join(Text).join(UserUpload).filter(
+                UserUpload.include_in_context == True, Embedding.bot_id == self.bot_id).order_by(Embedding.vector.l2_distance(vector)).limit(3).all()
+
+        context_array = [i.content for i in top]
+        final_contexts = []
+        for c in context_array:
+            relevant = self.ask_model_about_information(
+                message, c)
+
+            print(f"RELEVANT: {relevant}")
+
+            if relevant:
+                final_contexts.append(c)
+
+        if len(final_contexts) == 0:
+            return "No relevant information found in user's documents."
+        else:
+            return " | ".join(final_contexts)
 
     def get_last_n_messages(self, n: int):
         messages = self.db.query(ChatMessage).filter(
@@ -99,7 +162,8 @@ class Glyph:
         memory.chat_memory.messages = last_n
         llm = ChatOpenAI(temperature=0)
         agent_chain = initialize_agent(
-            self.tools, llm, agent="chat-conversational-react-description", verbose=True, memory=memory)
+            self.tools, llm, agent="chat-conversational-react-description", verbose=False, memory=memory)
+
         resp = agent_chain.run(message)
 
         return resp
