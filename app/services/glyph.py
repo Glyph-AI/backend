@@ -35,6 +35,23 @@ class Glyph:
         self.history_threshold = 2000
         self.search = GoogleSearchAPIWrapper()
         self.max_iter = 5
+        self.initial_tools = [
+            Tool(
+                name="Document Search",
+                description="Searches Documents the user has uploaded to the database.",
+                func=self.document_search
+            ),
+            Tool(
+                name="CodeGPT",
+                description="Handles computer code related requests.",
+                func=self.ask_chat
+            ),
+            Tool(
+                name="Respond to User",
+                description="If you have the answer to the question, this tool provides it to the user.",
+                func=None
+            )
+        ]
         self.tools = [
             Tool(
                 name="Document Search",
@@ -47,15 +64,21 @@ class Glyph:
                 func=self.search.run
             ),
             Tool(
+                name="CodeGPT",
+                description="Handles computer code related requests.",
+                func=self.ask_chat
+            ),
+            Tool(
                 name="Respond to User",
-                description="Responds directly to the user.",
+                description="If you have the answer to the question, this tool provides it to the user.",
                 func=None
             )
         ]
 
     def process_message(self, user_message: str):
         scratchpad = "PREVIOUS ACTIONS:"
-        prompt = self.format_prompt(user_message, "")
+        prompt = self.format_prompt(
+            user_message, "", [i.format() for i in self.initial_tools])
         initial_obj = self.build_chatgpt_query_object(prompt)
         internal_message_array = [initial_obj]
         chatgpt_response = self.chatgpt_request(internal_message_array)
@@ -72,14 +95,28 @@ class Glyph:
 
             scratchpad += f"\n\n{chatgpt_response}"
             tool_response = f"\n\nTOOL RESPONSE: {glyph_response}"
-            user_input = f"\n\nWhat is your next action based on the response from the tool? If you can answer the user's query you should."
+            user_input = f"\n\nWhat is your next action based on the response from the tool? If you have the answer, use the Respond to User tool."
 
-            print(scratchpad)
-
-            prompt = self.format_prompt(tool_response + user_input, scratchpad)
+            prompt = self.format_prompt(
+                tool_response + user_input, scratchpad, [i.format() for i in self.tools])
             obj = self.build_chatgpt_query_object(prompt)
             internal_message_array.append(obj)
             chatgpt_response = self.chatgpt_request(internal_message_array)
+
+        return glyph_response
+
+    def ask_chat(self, message):
+        messages = self.db.query(ChatMessage).filter(
+            ChatMessage.chat_id == self.chat_id
+        ).order_by(
+            ChatMessage.created_at.desc()
+        ).limit(16).offset(1)
+
+        formatted = [i.format_gpt() for i in messages]
+        formatted.reverse()
+
+        response = self.chatgpt_request(formatted)
+        return response
 
     def relevancy_checker(self, query, context_pieces):
         context = []
@@ -87,7 +124,6 @@ class Glyph:
             prompt = relevancy_prompt.format(context=c, query=query)
             query_obj = self.build_chatgpt_query_object(prompt)
             response = self.chatgpt_request([query_obj])
-            print(response)
             if response == "YES":
                 context.append(c)
 
@@ -139,6 +175,7 @@ class Glyph:
     def chatgpt_request(self, messages):
         return openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
+            temperature=0.0,
             messages=messages
         )["choices"][0]["message"]["content"]
 
@@ -150,15 +187,16 @@ class Glyph:
         ).limit(n)
 
         formatted_messages = [i.format_for_prompt() for i in messages]
+        formatted_messages.reverse()
 
         return "\n".join(formatted_messages[:-1])
 
-    def format_prompt(self, user_message: str, scratchpad: str):
+    def format_prompt(self, user_message: str, scratchpad: str, allowed_tools: list[dict]):
         chat_history = self.get_last_n_messages(
             self.message_history_to_include)
-        formatted_tools = [t.format() for t in self.tools]
         prompt = base_prompt.format(
-            tools=formatted_tools, user_input=user_message, chat_history=chat_history, scratchpad=scratchpad)
+            tools=allowed_tools, user_input=user_message, chat_history=chat_history, scratchpad=scratchpad)
+
         return prompt
 
     def embed_message(self, user_message: str):
