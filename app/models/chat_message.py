@@ -29,6 +29,14 @@ class ChatMessage(Base):
     def format_archive(self):
         return f"{self.role}: {self.content}"
 
+    def format_for_prompt(self):
+        if self.role == "assistant":
+            return f"Glyph: {self.content}"
+        elif self.role == "user":
+            return f"User: {self.content}"
+        else:
+            return f"System: {self.content}"
+
     def format_langchain(self):
         if self.role == "assistant":
             return AIMessage(content=self.content)

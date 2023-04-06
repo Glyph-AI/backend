@@ -1,29 +1,28 @@
-import time
 import openai
-from sqlalchemy.orm import Session
-from sqlalchemy import or_
-from langchain import LLMChain
-from langchain.llms.fake import FakeListLLM
-from langchain.agents import load_tools, Tool, AgentExecutor
-from langchain.agents.chat.base import ChatAgent
-from langchain.utilities import GoogleSearchAPIWrapper
-from langchain.chat_models import ChatOpenAI
-from langchain.agents import Tool
-from langchain.memory import ConversationBufferMemory
-from langchain.schema import SystemMessage, HumanMessage, AIMessage
-from langchain.chat_models import ChatOpenAI
-from langchain.agents import initialize_agent
 import os
+from sqlalchemy.orm import Session
+from langchain.utilities import GoogleSearchAPIWrapper
 import json
-from typing import Optional, Tuple
-from datetime import datetime
+from typing import Callable
 
-from app.models import Embedding, ChatMessage, Text, UserUpload
-import app.schemas as schemas
-from app.crud import chat_message as chat_message_crud
+from app.prompts import *
+from app.models import UserUpload, Text, Embedding, ChatMessage
 
 openai.api_key = os.environ.get(
     "OPENAI_API_KEY", "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")
+
+
+class Tool:
+    def __init__(self, name: str, description: str, func: Callable):
+        self.name = name
+        self.description = description
+        self.func = func
+
+    def format(self):
+        return {
+            "name": self.name,
+            "description": self.description
+        }
 
 
 class Glyph:
@@ -32,102 +31,116 @@ class Glyph:
         self.bot_id = bot_id
         self.chat_id = chat_id
         self.user_id = user_id
-        self.message_history_to_include = 15
+        self.message_history_to_include = 8
         self.history_threshold = 2000
-        search = GoogleSearchAPIWrapper()
-
+        self.search = GoogleSearchAPIWrapper()
+        self.max_iter = 5
         self.tools = [
             Tool(
                 name="Document Search",
-                func=self.build_context,
-                description="Use this tool first before using Google Search. Useful for finding answers to user questions."
+                description="Searches Documents the user has uploaded to the database.",
+                func=self.document_search
+            ),
+            Tool(
+                name="Google Search",
+                description="Searches Google for relevant information.",
+                func=self.search.run
+            ),
+            Tool(
+                name="Respond to User",
+                description="Responds directly to the user.",
+                func=None
             )
-            # Tool(
-            #     name="Google Search",
-            #     func=search.run,
-            #     description="Useful for when you need to answer questions and the information is not included in the context for the question. Try this tool if Document Search does not return a useful answer."
-            # )
         ]
 
-    def embed_message(self, message: str):
-        query_embed = openai.Embedding.create(
-            input=message, model="text-embedding-ada-002")['data'][0]['embedding']
-        return query_embed
+    def process_message(self, user_message: str):
+        scratchpad = "PREVIOUS ACTIONS:"
+        prompt = self.format_prompt(user_message, "")
+        initial_obj = self.build_chatgpt_query_object(prompt)
+        internal_message_array = [initial_obj]
+        chatgpt_response = self.chatgpt_request(internal_message_array)
+        iter = 0
+        while True:
+            action_taken, glyph_response = self.handle_response(
+                chatgpt_response)
+            if action_taken == "Respond to User":
+                return glyph_response
 
-    def chatgpt_request(self, query_object):
-        return openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[query_object]
-        )["choices"][0]["message"]["content"]
+            iter += 1
+            if iter >= self.max_iter:
+                return "Max Internal Iterations Reached"
 
-    def boolean_chatgpt(self, response: str):
+            scratchpad += f"\n\n{chatgpt_response}"
+            tool_response = f"\n\nTOOL RESPONSE: {glyph_response}"
+            user_input = f"\n\nWhat is your next action based on the response from the tool? If you can answer the user's query you should."
+
+            print(scratchpad)
+
+            prompt = self.format_prompt(tool_response + user_input, scratchpad)
+            obj = self.build_chatgpt_query_object(prompt)
+            internal_message_array.append(obj)
+            chatgpt_response = self.chatgpt_request(internal_message_array)
+
+    def relevancy_checker(self, query, context_pieces):
+        context = []
+        for c in context_pieces:
+            prompt = relevancy_prompt.format(context=c, query=query)
+            query_obj = self.build_chatgpt_query_object(prompt)
+            response = self.chatgpt_request([query_obj])
+            print(response)
+            if response == "YES":
+                context.append(c)
+
+        return context
+
+    def document_search(self, message):
+        embed = self.embed_message(message)
+        top = self.db.query(Embedding).join(Text).join(UserUpload).filter(
+            UserUpload.include_in_context == True, Embedding.bot_id == self.bot_id).order_by(Embedding.vector.l2_distance(embed)).limit(3).all()
+
+        context = [i.content for i in top]
+        relevant_pieces = self.relevancy_checker(message, context)
+
+        if len(relevant_pieces) > 0:
+            return "\n".join(relevant_pieces)
+
+        return "No Relevant Document Information Found"
+
+    def search_for_tool_func(self, tool_name):
+        for tool in self.tools:
+            if tool.name == tool_name:
+                return tool.func
+
+    def handle_response(self, response):
+        action, action_input = self.parse_response(response)
+        if action == "Respond to User":
+            return action, action_input
+
+        tool_func = self.search_for_tool_func(action)
+        response = tool_func(action_input)
+
+        return action, response
+
+    def parse_response(self, response):
         try:
             json_response = json.loads(response)
         except Exception as e:
-            json_response = {"response": "NO"}
+            json_response = {"action": "Respond to User",
+                             "action_input": "I'm sorry, an unknown exception as occurred"}
 
-        if json_response["response"] == "NO":
-            return False
+        return json_response["action"], json_response["action_input"]
 
-        return True
-
-    def ask_model_about_information(self, message: str, context: str):
-        query_object = {
+    def build_chatgpt_query_object(self, content: str):
+        return {
             "role": "user",
-            "content": f"""Context: {context}.\n\nQuestion: {message}\n\nGiven the preceeding context, determine whether or not the answer to the question is contained within the context. Your response should be in the form of a JSON Object like the following example where $ANSWER is either "YES" or "NO"\n\n```\n    {{\n        "response": "$ANSWER"\n    }}\n```\n\nProvide only the object, do not provide any additional explanation."""
+            "content": content
         }
 
-        return self.boolean_chatgpt(self.chatgpt_request(query_object))
-
-    def query_references_uploaded_file(self, message: str):
-        user_files = self.db.query(UserUpload).filter(
-            UserUpload.bot_id == self.bot_id).all()
-        file_names = [i.filename for i in user_files]
-        joined_filenames = ", ".join(file_names)
-
-        query_object = {
-            "role": "user",
-            "content": f"""File List: {joined_filenames}.\n\nQuestion: {message}\n\nGiven the preceeding list of files, determine whether or not the question contains a reference to one of the files listed.\nYour response should be in the form of a JSON Object like the following example where $ANSWER is either "YES" or "NO", and $FILENAME is a file from the list given or an empty string if no file is given.\n\n```\n\n    {{\n        "response": "$ANSWER",\n        "filename": "$FILENAME"\n    }}\n```\n\nProvide only the object, do not provide any additional explanation."""
-        }
-
-        response = self.chatgpt_request(query_object)
-        try:
-            json_response = json.loads(response)
-        except:
-            json_response = {"response": "NO", "filename": ""}
-
-        if json_response["response"] == "NO":
-            return False, ""
-
-        return True, json_response["filename"]
-
-    def build_context(self, message: str):
-        vector = self.embed_message(message)
-        ref, referenced_file = self.query_references_uploaded_file(message)
-        print(ref, referenced_file)
-        top = None
-        if ref:
-            top = self.db.query(Embedding).join(Text).join(UserUpload).filter(
-                UserUpload.include_in_context == True, UserUpload.filename == referenced_file, Embedding.bot_id == self.bot_id).order_by(Embedding.vector.l2_distance(vector)).limit(3).all()
-        else:
-            top = self.db.query(Embedding).join(Text).join(UserUpload).filter(
-                UserUpload.include_in_context == True, Embedding.bot_id == self.bot_id).order_by(Embedding.vector.l2_distance(vector)).limit(3).all()
-
-        context_array = [i.content for i in top]
-        final_contexts = []
-        for c in context_array:
-            relevant = self.ask_model_about_information(
-                message, c)
-
-            print(f"RELEVANT: {relevant}")
-
-            if relevant:
-                final_contexts.append(c)
-
-        if len(final_contexts) == 0:
-            return "No relevant information found in user's documents."
-        else:
-            return " | ".join(final_contexts)
+    def chatgpt_request(self, messages):
+        return openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=messages
+        )["choices"][0]["message"]["content"]
 
     def get_last_n_messages(self, n: int):
         messages = self.db.query(ChatMessage).filter(
@@ -136,86 +149,19 @@ class Glyph:
             ChatMessage.created_at.desc()
         ).limit(n)
 
-        formatted_messages = [i.format_langchain() for i in messages]
+        formatted_messages = [i.format_for_prompt() for i in messages]
 
-        return formatted_messages[:-1]
+        return "\n".join(formatted_messages[:-1])
 
-    def save_context(self, context: str):
-        new_message = schemas.ChatMessageCreateHidden(
-            role="user",
-            content=context,
-            chat_id=self.chat_id,
-            hidden=True
-        )
+    def format_prompt(self, user_message: str, scratchpad: str):
+        chat_history = self.get_last_n_messages(
+            self.message_history_to_include)
+        formatted_tools = [t.format() for t in self.tools]
+        prompt = base_prompt.format(
+            tools=formatted_tools, user_input=user_message, chat_history=chat_history, scratchpad=scratchpad)
+        return prompt
 
-        saved_message = chat_message_crud.create_chat_message(
-            self.db, new_message)
-
-        return saved_message
-
-    def query_gpt(self, message: str):
-        last_n = self.get_last_n_messages(self.message_history_to_include)
-        last_n = [SystemMessage(
-            content=f"You are Glyph, a helpful AI assistant. Current date and time are: {datetime.today().strftime('%Y-%m-%d %H:%M:%S')}")] + last_n
-        memory = ConversationBufferMemory(
-            memory_key="chat_history", return_messages=True)
-        memory.chat_memory.messages = last_n
-        llm = ChatOpenAI(temperature=0)
-        agent_chain = initialize_agent(
-            self.tools, llm, agent="chat-conversational-react-description", verbose=False, memory=memory)
-
-        resp = agent_chain.run(message)
-
-        return resp
-
-    def process_message(self, incoming_message: str):
-        # does the new message push our non-hidden messages over the character threshold?
-        unarchived = self.db.query(ChatMessage).filter(
-            or_(ChatMessage.archived == False, ChatMessage.archived == None),
-            ChatMessage.hidden == False,
-            ChatMessage.chat_id == self.chat_id
-        ).order_by(
-            ChatMessage.created_at.desc()
-        ).offset(
-            self.message_history_to_include
-        ).all()
-
-        unarchived_chars = sum([len(i.content) for i in unarchived])
-
-        if unarchived_chars > self.history_threshold:
-            self.embed_message_history(unarchived)
-
-        # embedding = self.embed_message(incoming_message)
-
-        # context = self.build_context(embedding)
-        # if context:
-        #     self.save_context(context)
-
-        answer = self.query_gpt(incoming_message)
-
-        return answer
-
-    def embed_message_history(self, message_list):
-        print("Embedding Chat History")
-
-        message_texts = [i.format_archive() for i in message_list]
-
-        combined_text = "\n".join(message_texts)
-
-        embedding = self.embed_message(combined_text)
-
-        new_e = Embedding(
-            bot_id=self.bot_id,
-            user_id=self.user_id,
-            vector=embedding,
-            content=combined_text
-        )
-
-        self.db.add(new_e)
-
-        for m in message_list:
-            m.archived = True
-
-        self.db.commit()
-
-        return True
+    def embed_message(self, user_message: str):
+        query_embed = openai.Embedding.create(
+            input=user_message, model="text-embedding-ada-002")['data'][0]['embedding']
+        return query_embed
