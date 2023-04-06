@@ -1,6 +1,7 @@
 import openai
 import os
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from langchain.utilities import GoogleSearchAPIWrapper
 import json
 from typing import Callable
@@ -76,6 +77,7 @@ class Glyph:
         ]
 
     def process_message(self, user_message: str):
+        self.archive()
         scratchpad = "PREVIOUS ACTIONS:"
         prompt = self.format_prompt(
             user_message, "", [i.format() for i in self.initial_tools])
@@ -105,6 +107,54 @@ class Glyph:
 
         return glyph_response
 
+    def archive(self):
+        unarchived = self.db.query(ChatMessage).filter(
+            or_(ChatMessage.archived == False, ChatMessage.archived == None),
+            ChatMessage.hidden == False,
+            ChatMessage.chat_id == self.chat_id
+        ).order_by(
+            ChatMessage.created_at.desc()
+        ).offset(
+            self.message_history_to_include
+        ).all()
+
+        unarchived_chars = sum([len(i.content) for i in unarchived])
+
+        if unarchived_chars > self.history_threshold:
+            self.embed_message_history(unarchived)
+
+    def embed_message_history(self, message_list):
+        print("Embedding Chat History")
+
+        message_texts = [i.format_archive() for i in message_list]
+
+        combined_text = "\n".join(message_texts)
+
+        # chunk if necessar
+        chunk_size = 2000
+        overlap = 500
+        chunks = [combined_text[i:i + chunk_size]
+                  for i in range(0, len(combined_text), chunk_size-overlap)]
+
+        for chunk in chunks:
+            embedding = self.embed_message(chunk)
+
+            new_e = Embedding(
+                bot_id=self.bot_id,
+                user_id=self.user_id,
+                vector=embedding,
+                content=chunk
+            )
+
+            self.db.add(new_e)
+
+        for m in message_list:
+            m.archived = True
+
+        self.db.commit()
+
+        return True
+
     def ask_chat(self, message):
         messages = self.db.query(ChatMessage).filter(
             ChatMessage.chat_id == self.chat_id
@@ -132,7 +182,7 @@ class Glyph:
     def document_search(self, message):
         embed = self.embed_message(message)
         top = self.db.query(Embedding).join(Text).join(UserUpload).filter(
-            UserUpload.include_in_context == True, Embedding.bot_id == self.bot_id).order_by(Embedding.vector.l2_distance(embed)).limit(3).all()
+            UserUpload.include_in_context == True, Embedding.bot_id == self.bot_id).order_by(Embedding.vector.l2_distance(embed)).limit(2).all()
 
         context = [i.content for i in top]
         relevant_pieces = self.relevancy_checker(message, context)
