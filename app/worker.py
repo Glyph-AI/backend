@@ -50,7 +50,7 @@ def process_file(user_upload_id, chat_id):
     if file_extension == "pdf":
         processor = PdfProcessor()
         local_path = processor.process(local_path)
-    elif ["jpg", "png", "tiff"].includes(file_extension):
+    elif file_extension in ["jpg", "png", "tiff"]:
         processor = ImageProcessor()
         local_path = processor.process(local_path)
     elif file_extension == "mp3":

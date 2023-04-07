@@ -182,7 +182,7 @@ class Glyph:
     def document_search(self, message):
         embed = self.embed_message(message)
         top = self.db.query(Embedding).join(Text).join(UserUpload).filter(
-            UserUpload.include_in_context == True, Embedding.bot_id == self.bot_id).order_by(Embedding.vector.l2_distance(embed)).limit(2).all()
+            UserUpload.include_in_context == True, Embedding.bot_id == self.bot_id).order_by(Embedding.vector.l2_distance(embed)).limit(3).all()
 
         context = [i.content for i in top]
         relevant_pieces = self.relevancy_checker(message, context)
@@ -204,6 +204,8 @@ class Glyph:
 
         tool_func = self.search_for_tool_func(action)
         response = tool_func(action_input)
+
+        print(action, action_input, response)
 
         return action, response
 
@@ -238,8 +240,19 @@ class Glyph:
 
         formatted_messages = [i.format_for_prompt() for i in messages]
         formatted_messages.reverse()
+        history_length = 0
+        history = []
+        for m in formatted_messages[:-1]:
+            history_length += len(m)
 
-        return "\n".join(formatted_messages[:-1])
+            history.append(m)
+
+            if history_length > 1500:
+                break
+
+        joined_messages = "\n".join(history)
+
+        return joined_messages
 
     def format_prompt(self, user_message: str, scratchpad: str, allowed_tools: list[dict]):
         chat_history = self.get_last_n_messages(
