@@ -188,7 +188,14 @@ class Glyph:
         relevant_pieces = self.relevancy_checker(message, context)
 
         if len(relevant_pieces) > 0:
-            return "\n".join(relevant_pieces)
+            context = "\n".join(relevant_pieces)
+            prompt = document_search.format(context=context, query=message)
+        
+            chat_message = {"role": "user", "content": prompt}
+            search_answer = self.chatgpt_request([chat_message])
+            return search_answer
+        
+        
 
         return "No Relevant Document Information Found"
 
@@ -224,7 +231,7 @@ class Glyph:
             "content": content
         }
 
-    def chatgpt_request(self, messages):
+    def chatgpt_request(self, messages: list[dict]):
         return openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             temperature=0.0,

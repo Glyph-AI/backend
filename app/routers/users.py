@@ -33,6 +33,7 @@ async def logout(db: Session = Depends(get_db)):
 async def auth_google(google_token: GoogleAuth, db: Session = Depends(get_db)):
     try:
         # Specify the CLIENT_ID of the app that accesses the backend:
+        print("HERE")
         google_user = id_token.verify_oauth2_token(
             google_token.token,
             requests.Request(),
