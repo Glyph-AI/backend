@@ -77,6 +77,7 @@ class Glyph:
         ]
 
     def process_message(self, user_message: str):
+        print("STARTING GLYPH PROCESSING")
         self.archive()
         scratchpad = "PREVIOUS ACTIONS:"
         prompt = self.format_prompt(
@@ -84,10 +85,13 @@ class Glyph:
         initial_obj = self.build_chatgpt_query_object(prompt)
         internal_message_array = [initial_obj]
         chatgpt_response = self.chatgpt_request(internal_message_array)
+        print("INITIAL CHATGPT RESPONSE GENERATED")
         iter = 0
         while True:
+            print(f"ITERATION: {iter + 1}")
             action_taken, glyph_response = self.handle_response(
                 chatgpt_response)
+            print(action_taken)
             if action_taken == "Respond to User":
                 return glyph_response
 
@@ -95,14 +99,15 @@ class Glyph:
             if iter >= self.max_iter:
                 return "Max Internal Iterations Reached"
 
+            print("REFORMATTING PROMPT")
             scratchpad += f"\n\n{chatgpt_response}"
             tool_response = f"\n\nTOOL RESPONSE: {glyph_response}"
             user_input = f"\n\nWhat is your next action based on the response from the tool? If you have the answer, use the Respond to User tool."
-
             prompt = self.format_prompt(
                 tool_response + user_input, scratchpad, [i.format() for i in self.tools])
             obj = self.build_chatgpt_query_object(prompt)
             internal_message_array.append(obj)
+            print("GETTING NEW CHATGPT RESPONSE FOR ITERATION")
             chatgpt_response = self.chatgpt_request(internal_message_array)
 
         return glyph_response
@@ -188,14 +193,15 @@ class Glyph:
         relevant_pieces = self.relevancy_checker(message, context)
 
         if len(relevant_pieces) > 0:
-            context = "\n".join(relevant_pieces)
-            prompt = document_search.format(context=context, query=message)
-        
-            chat_message = {"role": "user", "content": prompt}
-            search_answer = self.chatgpt_request([chat_message])
-            return search_answer
-        
-        
+            return "\n".join(relevant_pieces)
+
+        # if len(relevant_pieces) > 0:
+        #     context = "\n".join(relevant_pieces)
+        #     prompt = document_search.format(context=context, query=message)
+
+        #     chat_message = {"role": "user", "content": prompt}
+        #     search_answer = self.chatgpt_request([chat_message])
+        #     return search_answer
 
         return "No Relevant Document Information Found"
 
@@ -211,8 +217,6 @@ class Glyph:
 
         tool_func = self.search_for_tool_func(action)
         response = tool_func(action_input)
-
-        print(action, action_input, response)
 
         return action, response
 

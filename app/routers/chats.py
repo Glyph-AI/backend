@@ -66,33 +66,30 @@ def create_chat(chat_data: ChatBase, bot_id: int, db: Session = Depends(get_db),
     return chat_crud.create_chat(chat_data, bot_id, db, current_user)
 
 
-@chats_router.websocket("/{chat_id}/{chat_token}")
-async def chat_endpoint(bot_id: int, chat_id: int, chat_token: str, websocket: WebSocket, db: Session = Depends(get_db)):
-    current_user = decode_chat_token(db, chat_token)
-    await manager.connect(websocket)
-    try:
-        while True:
-            newMessage = await websocket.receive_text()
-            # process_data
-            if newMessage != "Connect":
-                messageJson = ChatMessageCreate(**json.loads(newMessage))
-                chatJson = handle_message_creation(
-                    bot_id, chat_id, messageJson, db, current_user)
+@chats_router.post("/{chat_id}/message", response_model=Chat)
+def send_message(message_data: ChatMessageCreate, chat_id: int, bot_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    print("REQUEST START")
+    chatJson = handle_message_creation(
+        bot_id, chat_id, message_data, db, current_user)
 
-                # create instance of Glyph
-                glyph = Glyph(db, bot_id, chat_id, current_user.id)
-                message = glyph.process_message(
-                    messageJson.content)
-                # process and respond
-                messageJson = ChatMessageCreate(
-                    **{"content": message, "role": "assistant", "chat_id": chat_id})
+    print("MESSAGE CREATED")
 
-                chatJson = handle_message_creation(
-                    bot_id, chat_id, messageJson, db, current_user)
+    glyph = Glyph(db, bot_id, chat_id, current_user.id)
+    response = glyph.process_message(
+        message_data.content
+    )
 
-                await manager.send_personal_message(json.dumps(chatJson), websocket)
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
+    print("GLYPH PROCESSING COMPLETE")
+
+    responseJson = ChatMessageCreate(
+        **{"content": response, "role": "assistant", "chat_id": chat_id}
+    )
+
+    responseJson = handle_message_creation(
+        bot_id, chat_id, responseJson, db, current_user
+    )
+
+    return responseJson
 
 
 @chats_router.get("/{chat_id}/", response_model=Chat)
