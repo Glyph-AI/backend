@@ -24,6 +24,7 @@ class Chat(Base):
     user = relationship("User", back_populates="chats")
     bot = relationship("Bot", back_populates="chats")
     chat_messages = relationship("ChatMessage", back_populates="chat")
+    chatgpt_logs = relationship("ChatgptLog", back_populates="chat")
 
     @property
     def chat_token(self):

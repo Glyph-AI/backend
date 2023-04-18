@@ -7,3 +7,4 @@ from .user_upload import UserUpload
 from .user import User
 from .subscription import Subscription
 from .price_tier import PriceTier
+from .chatgpt_log import ChatgptLog

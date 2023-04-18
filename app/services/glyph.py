@@ -7,7 +7,7 @@ import json
 from typing import Callable
 
 from app.prompts import *
-from app.models import UserUpload, Text, Embedding, ChatMessage
+from app.models import UserUpload, Text, Embedding, ChatMessage, ChatgptLog
 
 openai.api_key = os.environ.get(
     "OPENAI_API_KEY", "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")
@@ -77,7 +77,6 @@ class Glyph:
         ]
 
     def process_message(self, user_message: str):
-        print("STARTING GLYPH PROCESSING")
         self.archive()
         scratchpad = "PREVIOUS ACTIONS:"
         prompt = self.format_prompt(
@@ -85,13 +84,13 @@ class Glyph:
         initial_obj = self.build_chatgpt_query_object(prompt)
         internal_message_array = [initial_obj]
         chatgpt_response = self.chatgpt_request(internal_message_array)
-        print("INITIAL CHATGPT RESPONSE GENERATED")
+
         iter = 0
         while True:
-            print(f"ITERATION: {iter + 1}")
+
             action_taken, glyph_response = self.handle_response(
                 chatgpt_response)
-            print(action_taken)
+
             if action_taken == "Respond to User":
                 return glyph_response
 
@@ -99,15 +98,15 @@ class Glyph:
             if iter >= self.max_iter:
                 return "Max Internal Iterations Reached"
 
-            print("REFORMATTING PROMPT")
             scratchpad += f"\n\n{chatgpt_response}"
-            tool_response = f"\n\nTOOL RESPONSE: {glyph_response}"
-            user_input = f"\n\nWhat is your next action based on the response from the tool? If you have the answer, use the Respond to User tool."
-            prompt = self.format_prompt(
-                tool_response + user_input, scratchpad, [i.format() for i in self.tools])
+            user_input = f"What is your next action based on the response from the tool? If you have the answer, use the Respond to User tool."
+            prompt = self.format_conversation_prompt(
+                tool_response=glyph_response, user_message=user_input, scratchpad=scratchpad, allowed_tools=[
+                    i.format() for i in self.tools]
+            )
             obj = self.build_chatgpt_query_object(prompt)
             internal_message_array.append(obj)
-            print("GETTING NEW CHATGPT RESPONSE FOR ITERATION")
+
             chatgpt_response = self.chatgpt_request(internal_message_array)
 
         return glyph_response
@@ -129,7 +128,6 @@ class Glyph:
             self.embed_message_history(unarchived)
 
     def embed_message_history(self, message_list):
-        print("Embedding Chat History")
 
         message_texts = [i.format_archive() for i in message_list]
 
@@ -235,12 +233,31 @@ class Glyph:
             "content": content
         }
 
+    def chatgpt_log(self, message_to_log):
+        log = ChatgptLog(
+            chat_id=self.chat_id,
+            message=message_to_log,
+        )
+
+        self.db.add(log)
+        self.db.commit()
+        self.db.refresh(log)
+
+        return log
+
     def chatgpt_request(self, messages: list[dict]):
-        return openai.ChatCompletion.create(
+        # log prompt and response
+        self.chatgpt_log(f"{messages}")
+
+        response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             temperature=0.0,
             messages=messages
         )["choices"][0]["message"]["content"]
+
+        self.chatgpt_log(response)
+
+        return response
 
     def get_last_n_messages(self, n: int):
         messages = self.db.query(ChatMessage).filter(
@@ -270,6 +287,13 @@ class Glyph:
             self.message_history_to_include)
         prompt = base_prompt.format(
             tools=allowed_tools, user_input=user_message, chat_history=chat_history, scratchpad=scratchpad)
+
+        return prompt
+
+    def format_conversation_prompt(self, tool_response: str, user_message: str, scratchpad: str, allowed_tools: list[dict]):
+        prompt = conversation_prompt.format(
+            tools=allowed_tools, tool_response=tool_response, user_input=user_message, scratchpad=scratchpad,
+        )
 
         return prompt
 
