@@ -26,7 +26,8 @@ class User(Base):
                         server_default=func.now())
 
     user_uploads = relationship("UserUpload", back_populates="user")
-    bots = relationship("Bot", back_populates="user")
+    bots = relationship(
+        "Bot", secondary="bot_users", back_populates="users")
     texts = relationship("Text", back_populates="user")
     embeddings = relationship("Embedding", back_populates="user")
     chats = relationship("Chat", back_populates="user")

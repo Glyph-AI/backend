@@ -6,6 +6,8 @@ from .user_upload import UserUpload
 
 class BotBase(BaseModel):
     name: str
+    sharing_enabled: bool
+    sharing_code: str | None = None
 
 
 class BotCreate(BotBase):
@@ -19,6 +21,14 @@ class Bot(BotBase):
     created_at: datetime
     chats: list[Chat]
     user_uploads: list[UserUpload]
+
+    class Config:
+        orm_mode = True
+
+
+class BotUpdate(BaseModel):
+    name: str | None = None
+    sharing_enabled: bool | None = None
 
     class Config:
         orm_mode = True
