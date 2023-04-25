@@ -25,27 +25,20 @@ def process_file_upload(upload_file_record: UserUpload):
     pass
 
 
-@user_uploads_router.post("/bots/{bot_id}/chats/{chat_id}/user_upload")
-def upload_file(bot_id: int, chat_id: int, file: UploadFile, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    file_extension = get_file_extension(file.filename)
-    # if file_extension not in ALLOWED_FILE_EXTENSIONS:
-    #     raise Errors.invalid_file_type
-
-    # create a upload file record
+@user_uploads_router.post("/bots/{bot_id}/user_upload")
+def upload_file(bot_id: int, file: UploadFile, chat_id: int = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     upload_file_record = user_upload_crud.create_user_upload(
         bot_id, db, current_user, file)
 
-    # create message for upload
-    upload_message = ChatMessageCreateHidden(
-        role="system",
-        content=f"{file.filename} uploaded",
-        chat_id=chat_id,
-        hidden=False
-    )
+    if chat_id:
+        upload_message = ChatMessageCreateHidden(
+            role="system",
+            content=f"{file.filename} uploaded",
+            chat_id=chat_id,
+            hidden=False
+        )
 
-    chat_message_crud.create_chat_message(db, upload_message)
-
-    # process to embeddings (maybe a background process)
+        chat_message_crud.create_chat_message(db, upload_message)
     task = process_file.delay(upload_file_record.id, chat_id)
 
     return JSONResponse({"task_id": task.id})
