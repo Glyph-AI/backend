@@ -1,5 +1,6 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from app.models import Bot, BotUser
 import app.schemas as schemas
 from app.errors import Errors
@@ -8,7 +9,9 @@ import string
 
 
 def filter_bots(db: Session, current_user: schemas.User):
-    return db.query(Bot).join(BotUser).filter(BotUser.user_id == current_user.id)
+    print(str(db.query(Bot).join(BotUser).filter(BotUser.user_id == current_user.id, or_(
+        Bot.creator_id == current_user.id, Bot.sharing_enabled == True))))
+    return db.query(Bot).join(BotUser).filter(BotUser.user_id == current_user.id, or_(BotUser.creator == True, Bot.sharing_enabled == True))
 
 
 def get_bots(db: Session, current_user: schemas.User):
