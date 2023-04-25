@@ -57,12 +57,12 @@ def handle_message_creation(bot_id, chat_id, messageJson, db, current_user):
     return chatJson
 
 
-@chats_router.get("/", response_model=list[Chat])
+@chats_router.get("", response_model=list[Chat])
 def get_chats_by_user_id(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return chat_crud.get_chats(db, current_user)
 
 
-@chats_router.post("/", response_model=Chat)
+@chats_router.post("", response_model=Chat)
 def create_chat(chat_data: ChatBase, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return chat_crud.create_chat(chat_data, db, current_user)
 
@@ -94,7 +94,7 @@ def send_message(message_data: ChatMessageCreate, chat_id: int, db: Session = De
     return responseJson
 
 
-@chats_router.get("/{chat_id}/", response_model=Chat)
+@chats_router.get("/{chat_id}", response_model=Chat)
 def get_all_messages_for_chat(chat_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     output = chat_crud.get_chat_by_id(chat_id, db, current_user)
     return output
