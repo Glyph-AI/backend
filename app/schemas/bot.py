@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from .chat import Chat
+from .user_upload import UserUpload
 
 
 class BotBase(BaseModel):
@@ -17,6 +18,7 @@ class Bot(BotBase):
     user_id: int
     created_at: datetime
     chats: list[Chat]
+    user_uploads: list[UserUpload]
 
     class Config:
         orm_mode = True

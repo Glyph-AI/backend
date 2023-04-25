@@ -18,3 +18,8 @@ async def get_user_bots(db: Session = Depends(get_db), current_user: User = Depe
 async def create_bot(bot_data: BotCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     new_bot_data = bot_crud.create_bot(db, current_user, bot_data)
     return new_bot_data
+
+
+@bots_router.get("/{bot_id}", response_model=Bot)
+async def get_bot_by_id(bot_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return bot_crud.get_bot_by_id(bot_id, db, current_user)

@@ -4,8 +4,9 @@ from sqlalchemy.orm import Session
 from google.oauth2 import id_token
 from google.auth.transport import requests
 import os
+from datetime import datetime, timedelta, timezone
 
-from app.dependencies import get_db, get_current_user, create_access_token
+from app.dependencies import get_db, get_current_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.schemas import UserCreateSSO, User, GoogleAuth
 import app.crud.user as user_crud
 from app.errors import Errors
@@ -70,10 +71,23 @@ async def auth_google(google_token: GoogleAuth, db: Session = Depends(get_db)):
         access_token = create_access_token(data={"sub": db_user.email})
         response = JSONResponse(
             content={"access_token": access_token, "token_type": "bearer"})
+
+        cookie_expiration_delta = timedelta(
+            minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expiration = datetime.now(timezone.utc) + cookie_expiration_delta
+        print("-" * 80)
+        print(expiration, type(expiration), expiration.tzinfo)
         response.set_cookie(
             key="access_token",
             value=f"Bearer {access_token}",
-            httponly=True
+            httponly=True,
+            expires=expiration
+        )
+
+        response.set_cookie(
+            key="active_session",
+            value="true",
+            expires=expiration
         )
 
         return response

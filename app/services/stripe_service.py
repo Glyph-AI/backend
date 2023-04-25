@@ -8,7 +8,7 @@ from datetime import datetime
 stripe.api_key = os.environ.get(
     "STRIPE_API_KEY", "sk_test_51K7WUzKHkgogKyeFKj5vTjzSMpHwBPR4oFpPfb1MEszdEGGV13zoccqyXfImvsCGH9D09JxZ1GdWsRTGrzGEdqkN00v7zQXERy")
 APPLICATION_SERVER = os.environ.get(
-    "APPLICATION_SERVER", "http://localhost:3000/settings")
+    "APPLICATION_SERVER", "http://localhost:3000/profile")
 
 
 class StripeService():
