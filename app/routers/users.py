@@ -64,6 +64,7 @@ async def auth_google(google_token: GoogleAuth, db: Session = Depends(get_db)):
                 "email": google_user["email"],
                 "google_user_id": userid,
                 "role": "user",
+                "profile_picture_location": google_user["picture"]
             }
 
             user_create_data = UserCreateSSO(**user_data)
@@ -71,6 +72,11 @@ async def auth_google(google_token: GoogleAuth, db: Session = Depends(get_db)):
 
             stripe_svc = StripeService(db)
             stripe_svc.create_customer(db_user)
+
+        # check if users have a profile picture already
+        if db_user.profile_picture_location is None:
+            db_user.profile_picture_location = google_user["picture"]
+            db.commit()
 
         # generate access_token
         access_token = create_access_token(data={"sub": db_user.email})
