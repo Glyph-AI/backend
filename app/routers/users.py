@@ -12,6 +12,8 @@ import app.crud.user as user_crud
 from app.errors import Errors
 from app.services import StripeService
 
+COOKIE_DOMAIN = os.environ.get("COOKIE_DOMAIN", "localhost")
+
 users_router = APIRouter(tags=["User API"])
 
 
@@ -32,6 +34,7 @@ async def profile(db: Session = Depends(get_db), current_user: User = Depends(ge
 async def logout(db: Session = Depends(get_db)):
     response = JSONResponse(content={"message": "Logged Out"})
     response.delete_cookie(key="Authorization")
+    response.delete_cookie(key="active_session")
     return response
 
 
@@ -98,7 +101,8 @@ async def auth_google(google_token: GoogleAuth, db: Session = Depends(get_db)):
         response.set_cookie(
             key="active_session",
             value="true",
-            expires=expiration
+            expires=expiration,
+            domain=COOKIE_DOMAIN
         )
 
         return response
