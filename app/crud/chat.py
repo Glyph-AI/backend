@@ -1,12 +1,13 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from sqlalchemy import and_
-from app.models import Chat, ChatMessage
+from app.models import Chat, ChatMessage, Bot, BotUser
 import app.schemas as schemas
 
 
 def get_chats(db: Session, current_user: schemas.User):
-    return db.query(Chat).filter(Chat.user_id == current_user.id).all()
+    return db.query(Chat).join(Bot).join(BotUser).filter(Chat.user_id == current_user.id, or_(BotUser.creator == True, Bot.sharing_enabled == True)).all()
 
 
 def create_chat(chat_data: schemas.ChatBase, db: Session, current_user: schemas.User):
