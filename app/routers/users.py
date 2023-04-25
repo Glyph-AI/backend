@@ -23,6 +23,11 @@ async def get_user(id: int, db: Session = Depends(get_db), current_user: User = 
     return current_user
 
 
+@users_router.get("/profile", response_model=User)
+async def profile(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return current_user
+
+
 @users_router.post("/logout")
 async def logout(db: Session = Depends(get_db)):
     response = JSONResponse(content={"message": "Logged Out"})

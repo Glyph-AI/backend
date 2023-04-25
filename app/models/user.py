@@ -1,5 +1,6 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql import func
 import bcrypt
@@ -26,8 +27,7 @@ class User(Base):
                         server_default=func.now())
 
     user_uploads = relationship("UserUpload", back_populates="user")
-    bots = relationship(
-        "Bot", secondary="bot_users", back_populates="users")
+    bots = association_proxy("bot_users", "bots")
     texts = relationship("Text", back_populates="user")
     embeddings = relationship("Embedding", back_populates="user")
     chats = relationship("Chat", back_populates="user")

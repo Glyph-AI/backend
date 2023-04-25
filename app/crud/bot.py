@@ -1,14 +1,18 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session
-from app.models import Bot
+from app.models import Bot, BotUser
 import app.schemas as schemas
 from app.errors import Errors
 import random
 import string
 
 
+def filter_bots(db: Session, current_user: schemas.User):
+    return db.query(Bot).join(BotUser).filter(BotUser.user_id == current_user.id)
+
+
 def get_bots(db: Session, current_user: schemas.User):
-    return db.query(Bot).filter(Bot.user_id == current_user.id).all()
+    return filter_bots(db, current_user).all()
 
 
 def create_bot(db: Session, current_user: schemas.User, bot_data: schemas.BotBase):
@@ -21,16 +25,16 @@ def create_bot(db: Session, current_user: schemas.User, bot_data: schemas.BotBas
 
 
 def get_bot_by_id(bot_id: int, db: Session, current_user: schemas.User):
-    bot = db.query(Bot).get(bot_id)
-    if bot.user_id != current_user.id:
+    bot = filter_bots(db, current_user).filter(Bot.id == bot_id).one_or_none()
+    if bot is None:
         raise Errors.credentials_error
 
     return bot
 
 
 def update_bot_by_id(bot_id: int, bot_data: schemas.BotUpdate, db: Session, current_user: schemas.User):
-    bot = db.query(Bot).get(bot_id)
-    if bot.user_id != current_user.id:
+    bot = filter_bots(db, current_user).filter(Bot.id == bot_id).one_or_none()
+    if bot is None:
         raise Errors.credentials_error
 
     for key, value in bot_data.dict(exclude_none=True).items():
@@ -52,4 +56,18 @@ def update_bot_by_id(bot_id: int, bot_data: schemas.BotUpdate, db: Session, curr
     db.commit()
     db.refresh(bot)
 
+    return bot
+
+
+def add_shared_bot(sharing_data: schemas.BotSharingAdd, db: Session, current_user: schemas.User):
+    sharing_code = sharing_data.sharing_code
+    # get bot for given code
+    bot = db.query(Bot).filter(Bot.sharing_code == sharing_code).first()
+    if not bot.sharing_enabled:
+        raise Errors.credentials_error
+
+    # create a bot_user
+    bot.users.append(current_user)
+    db.commit()
+    db.refresh(bot)
     return bot
