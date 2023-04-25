@@ -43,10 +43,10 @@ def decode_chat_token(db, token):
 
 def handle_message_creation(bot_id, chat_id, messageJson, db, current_user):
     chat_crud.create_message(
-        bot_id, chat_id, messageJson, db, current_user)
+        chat_id, messageJson, db, current_user)
 
     newChatData = chat_crud.get_chat_by_id(
-        bot_id, chat_id, db, current_user)
+        chat_id, db, current_user)
 
     newChatJson = newChatData.__dict__
 
@@ -68,7 +68,7 @@ def create_chat(chat_data: ChatBase, db: Session = Depends(get_db), current_user
 
 
 @chats_router.post("/{chat_id}/message", response_model=Chat)
-def send_message(message_data: ChatMessageCreate, chat_id: int, bot_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def send_message(message_data: ChatMessageCreate, chat_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     print("REQUEST START")
     bot_id = db.query(models.Chat).get(chat_id).bot_id
     chatJson = handle_message_creation(
