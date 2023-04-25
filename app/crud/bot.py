@@ -9,8 +9,6 @@ import string
 
 
 def filter_bots(db: Session, current_user: schemas.User):
-    print(str(db.query(Bot).join(BotUser).filter(BotUser.user_id == current_user.id, or_(
-        Bot.creator_id == current_user.id, Bot.sharing_enabled == True))))
     return db.query(Bot).join(BotUser).filter(BotUser.user_id == current_user.id, or_(BotUser.creator == True, Bot.sharing_enabled == True))
 
 
