@@ -12,4 +12,5 @@ else
         uvicorn --factory app.main:create_app --reload --host 0.0.0.0
     else
         uvicorn app.main:create_app --host 0.0.0.0
+    fi
 fi
