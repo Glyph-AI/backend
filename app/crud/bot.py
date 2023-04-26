@@ -71,7 +71,10 @@ def add_shared_bot(sharing_data: schemas.BotSharingAdd, db: Session, current_use
         raise Errors.credentials_error
 
     # create a bot_user
-    bot.users.append(current_user)
+    db_bot_user = BotUser(user_id=current_user.id,
+                          bot_id=bot.id)
+    db.add(db_bot_user)
+    db.commit()
     db.commit()
     db.refresh(bot)
     return bot
