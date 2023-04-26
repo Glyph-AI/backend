@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: "backend-1"
-          image: "gcr.io/glyph-development-382218/glyph-development/backend:$COMMIT_SHA"
+          image: "gcr.io/glyph-development-382218/glyph-development/backend:latest"
 ---
 apiVersion: "autoscaling/v2"
 kind: "HorizontalPodAutoscaler"
