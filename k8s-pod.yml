@@ -1,0 +1,43 @@
+---
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: "glyph-backend"
+  namespace: "default"
+  labels:
+    app: "glyph-backend"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: "glyph-backend"
+  template:
+    metadata:
+      labels:
+        app: "glyph-backend"
+    spec:
+      containers:
+        - name: "backend-1"
+          image: "gcr.io/glyph-development-382218/glyph-development/backend:$SHORT_SHA"
+---
+apiVersion: "autoscaling/v2"
+kind: "HorizontalPodAutoscaler"
+metadata:
+  name: "glyph-backend-hpa-lok1"
+  namespace: "default"
+  labels:
+    app: "glyph-backend"
+spec:
+  scaleTargetRef:
+    kind: "Deployment"
+    name: "glyph-backend"
+    apiVersion: "apps/v1"
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: "Resource"
+      resource:
+        name: "cpu"
+        target:
+          type: "Utilization"
+          averageUtilization: 80
