@@ -12,7 +12,8 @@ def get_chats(db: Session, current_user: schemas.User):
     # filter chats with bots that don't have sharing enabled
     user_owned = [
         i for i in all_user_chats if i.bot.creator_id == current_user.id]
-    shared = [i for i in all_user_chats if i.bot.sharing_enabled]
+    shared = [
+        i for i in all_user_chats if i.bot.sharing_enabled and i.bot.creator_id != current_user.id]
 
     return user_owned + shared
 

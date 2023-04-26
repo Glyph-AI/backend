@@ -77,37 +77,41 @@ class Glyph:
         ]
 
     def process_message(self, user_message: str):
-        self.archive()
-        scratchpad = "PREVIOUS ACTIONS:"
-        prompt = self.format_prompt(
-            user_message, "", [i.format() for i in self.initial_tools])
-        initial_obj = self.build_chatgpt_query_object(prompt)
-        internal_message_array = [initial_obj]
-        chatgpt_response = self.chatgpt_request(internal_message_array)
-
-        iter = 0
-        while True:
-
-            action_taken, glyph_response = self.handle_response(
-                chatgpt_response)
-
-            if action_taken == "Respond to User":
-                return glyph_response
-
-            iter += 1
-            if iter >= self.max_iter:
-                return "Max Internal Iterations Reached"
-
-            scratchpad += f"\n\n{chatgpt_response}"
-            user_input = f"What is your next action based on the response from the tool? If you have the answer, use the Respond to User tool."
-            prompt = self.format_conversation_prompt(
-                tool_response=glyph_response, user_message=user_input, scratchpad=scratchpad, allowed_tools=[
-                    i.format() for i in self.tools]
-            )
-            obj = self.build_chatgpt_query_object(prompt)
-            internal_message_array.append(obj)
-
+        try:
+            self.archive()
+            scratchpad = "PREVIOUS ACTIONS:"
+            prompt = self.format_prompt(
+                user_message, "", [i.format() for i in self.initial_tools])
+            initial_obj = self.build_chatgpt_query_object(prompt)
+            internal_message_array = [initial_obj]
             chatgpt_response = self.chatgpt_request(internal_message_array)
+
+            iter = 0
+            while True:
+
+                action_taken, glyph_response = self.handle_response(
+                    chatgpt_response)
+
+                if action_taken == "Respond to User":
+                    return glyph_response
+
+                iter += 1
+                if iter >= self.max_iter:
+                    return "Max Internal Iterations Reached"
+
+                scratchpad += f"\n\n{chatgpt_response}"
+                user_input = f"What is your next action based on the response from the tool? If you have the answer, use the Respond to User tool."
+                prompt = self.format_conversation_prompt(
+                    tool_response=glyph_response, user_message=user_input, scratchpad=scratchpad, allowed_tools=[
+                        i.format() for i in self.tools]
+                )
+                obj = self.build_chatgpt_query_object(prompt)
+                internal_message_array.append(obj)
+
+                chatgpt_response = self.chatgpt_request(internal_message_array)
+        except Exception as e:
+            print(e)
+            return "I'm sorry, an internal error occurred, please try again!"
 
         return glyph_response
 
