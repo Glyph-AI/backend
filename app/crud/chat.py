@@ -7,7 +7,14 @@ import app.schemas as schemas
 
 
 def get_chats(db: Session, current_user: schemas.User):
-    return db.query(Chat).join(Bot).join(BotUser).filter(Chat.user_id == current_user.id, or_(BotUser.creator == True, Bot.sharing_enabled == True)).all()
+    all_user_chats = db.query(Chat).filter(
+        Chat.user_id == current_user.id).all()
+    # filter chats with bots that don't have sharing enabled
+    user_owned = [
+        i for i in all_user_chats if i.bot.creator_id == current_user.id]
+    shared = [i for i in all_user_chats if i.bot.sharing_enabled]
+
+    return user_owned + shared
 
 
 def create_chat(chat_data: schemas.ChatBase, db: Session, current_user: schemas.User):
