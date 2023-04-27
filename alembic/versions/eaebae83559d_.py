@@ -26,6 +26,7 @@ def upgrade() -> None:
                     sa.Column('prompt', sa.String(), nullable=False),
                     sa.Column('created_at', sa.DateTime(timezone=True),
                               server_default=sa.text('now()'), nullable=True),
+                    sa.Column('initial_message', sa.String()),
                     sa.PrimaryKeyConstraint('id')
                     )
     op.create_index(op.f('ix_personas_id'), 'personas', ['id'], unique=False)
@@ -35,7 +36,11 @@ def upgrade() -> None:
     # add base persona
     bind = op.get_bind()
     session = orm.Session(bind=bind)
-    new_persona = Persona(name="Friendly Assistant", prompt="You are an AI assistant based on OpenAI's ChatGPT. You are designed to perform data search and retrieval from user uploaded files, and from the internet in general. You are kind and courteous.")
+    new_persona = Persona(
+        name="Friendly Assistant",
+        prompt="You are an AI assistant based on OpenAI's ChatGPT. You are designed to perform data search and retrieval from user uploaded files, and from the internet in general. You are kind and courteous.",
+        initial_message="Hello! I'm Glyph! How can I help you today?"
+    )
     session.add(new_persona)
     session.commit()
     session.refresh(new_persona)

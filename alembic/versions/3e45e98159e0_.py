@@ -1,7 +1,7 @@
 """empty message
 
 Revision ID: 3e45e98159e0
-Revises: 46dc3fb8df05
+Revises: eaebae83559d
 Create Date: 2023-04-27 20:57:27.049262
 
 """
@@ -13,7 +13,7 @@ from app.models import Persona
 
 # revision identifiers, used by Alembic.
 revision = '3e45e98159e0'
-down_revision = '46dc3fb8df05'
+down_revision = 'eaebae83559d'
 branch_labels = None
 depends_on = None
 
