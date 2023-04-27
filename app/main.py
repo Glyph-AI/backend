@@ -38,5 +38,6 @@ def create_app():
     app.include_router(chats_router)
     app.include_router(user_uploads_router)
     app.include_router(subscriptions_router)
+    app.include_router(personas_router)
 
     return app

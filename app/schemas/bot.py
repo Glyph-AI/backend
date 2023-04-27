@@ -3,6 +3,7 @@ from datetime import datetime
 from .chat import Chat
 from .user import User
 from .user_upload import UserUpload
+from .persona import Persona
 
 
 class BotBase(BaseModel):
@@ -11,7 +12,12 @@ class BotBase(BaseModel):
     sharing_code: str | None = None
 
 
-class BotCreate(BotBase):
+class BotCreate(BaseModel):
+    name: str
+    sharing_enabled: bool | None = False
+    sharing_code: str | None = None
+    persona_id: int
+
     class Config:
         orm_mode = True
 
@@ -21,6 +27,7 @@ class Bot(BotBase):
     created_at: datetime
     users: list[User]
     chats: list[Chat]
+    persona: Persona
     user_uploads: list[UserUpload]
     creator_id: int | None = None
 

@@ -7,7 +7,7 @@ import json
 from typing import Callable
 
 from app.prompts import *
-from app.models import UserUpload, Text, Embedding, ChatMessage, ChatgptLog
+from app.models import UserUpload, Text, Embedding, ChatMessage, ChatgptLog, Bot
 
 openai.api_key = os.environ.get(
     "OPENAI_API_KEY", "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")
@@ -36,6 +36,7 @@ class Glyph:
         self.history_threshold = 2000
         self.search = GoogleSearchAPIWrapper()
         self.max_iter = 5
+        self.bot = self.db.query(Bot).get(bot_id)
         self.initial_tools = [
             Tool(
                 name="Document Search",
@@ -81,7 +82,7 @@ class Glyph:
             self.archive()
             scratchpad = "PREVIOUS ACTIONS:"
             prompt = self.format_prompt(
-                user_message, "", [i.format() for i in self.initial_tools])
+                user_message, "", [i.format() for i in self.get_initial_tools()])
             initial_obj = self.build_chatgpt_query_object(prompt)
             internal_message_array = [initial_obj]
             chatgpt_response = self.chatgpt_request(internal_message_array)
@@ -114,6 +115,14 @@ class Glyph:
             return "I'm sorry, an internal error occurred, please try again!"
 
         return glyph_response
+
+    def get_initial_tools(self):
+        embeddings = self.db.query(Embedding).filter(
+            Embedding.bot_id == self.bot_id).all()
+        if len(embeddings) == 0:
+            return self.tools
+
+        return self.initial_tools
 
     def archive(self):
         unarchived = self.db.query(ChatMessage).filter(
@@ -192,7 +201,8 @@ class Glyph:
             UserUpload.include_in_context == True, Embedding.bot_id == self.bot_id).order_by(Embedding.vector.l2_distance(embed)).limit(3).all()
 
         context = [i.content for i in top]
-        relevant_pieces = self.relevancy_checker(message, context)
+        # relevant_pieces = self.relevancy_checker(message, context)
+        relevant_pieces = context
 
         if len(relevant_pieces) > 0:
             return "\n".join(relevant_pieces)
@@ -255,7 +265,7 @@ class Glyph:
 
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            temperature=0.0,
+            temperature=0.5,
             messages=messages
         )["choices"][0]["message"]["content"]
 
@@ -290,13 +300,13 @@ class Glyph:
         chat_history = self.get_last_n_messages(
             self.message_history_to_include)
         prompt = base_prompt.format(
-            tools=allowed_tools, user_input=user_message, chat_history=chat_history, scratchpad=scratchpad)
+            tools=allowed_tools, persona_prompt=self.bot.persona.prompt, user_input=user_message, chat_history=chat_history, scratchpad=scratchpad)
 
         return prompt
 
     def format_conversation_prompt(self, tool_response: str, user_message: str, scratchpad: str, allowed_tools: list[dict]):
         prompt = conversation_prompt.format(
-            tools=allowed_tools, tool_response=tool_response, user_input=user_message, scratchpad=scratchpad,
+            tools=allowed_tools, persona_prompt=self.bot.persona.prompt, tool_response=tool_response, user_input=user_message, scratchpad=scratchpad,
         )
 
         return prompt
