@@ -13,12 +13,13 @@ from app.crud import chat as chat_crud
 from app.crud import user as user_crud
 from app.errors import Errors
 from app.services import Glyph
+import app.models as models
 
 
 SECRET_KEY = os.getenv("AUTH_SECRET_KEY")
 ALGORITHM = "HS256"
 
-chats_router = APIRouter(tags=["Chats API"], prefix="/bots/{bot_id}/chats")
+chats_router = APIRouter(tags=["Chats API"], prefix="/chats")
 
 manager = ConnectionManager()
 
@@ -42,10 +43,10 @@ def decode_chat_token(db, token):
 
 def handle_message_creation(bot_id, chat_id, messageJson, db, current_user):
     chat_crud.create_message(
-        bot_id, chat_id, messageJson, db, current_user)
+        chat_id, messageJson, db, current_user)
 
     newChatData = chat_crud.get_chat_by_id(
-        bot_id, chat_id, db, current_user)
+        chat_id, db, current_user)
 
     newChatJson = newChatData.__dict__
 
@@ -56,19 +57,20 @@ def handle_message_creation(bot_id, chat_id, messageJson, db, current_user):
     return chatJson
 
 
-@chats_router.get("/", response_model=list[Chat])
-def get_chats_by_user_id(bot_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return chat_crud.get_chats(bot_id, db, current_user)
+@chats_router.get("", response_model=list[Chat])
+def get_chats_by_user_id(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return chat_crud.get_chats(db, current_user)
 
 
-@chats_router.post("/", response_model=Chat)
-def create_chat(chat_data: ChatBase, bot_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return chat_crud.create_chat(chat_data, bot_id, db, current_user)
+@chats_router.post("", response_model=Chat)
+def create_chat(chat_data: ChatBase, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return chat_crud.create_chat(chat_data, db, current_user)
 
 
 @chats_router.post("/{chat_id}/message", response_model=Chat)
-def send_message(message_data: ChatMessageCreate, chat_id: int, bot_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def send_message(message_data: ChatMessageCreate, chat_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     print("REQUEST START")
+    bot_id = db.query(models.Chat).get(chat_id).bot_id
     chatJson = handle_message_creation(
         bot_id, chat_id, message_data, db, current_user)
 
@@ -92,7 +94,7 @@ def send_message(message_data: ChatMessageCreate, chat_id: int, bot_id: int, db:
     return responseJson
 
 
-@chats_router.get("/{chat_id}/", response_model=Chat)
-def get_all_messages_for_chat(bot_id: int, chat_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    output = chat_crud.get_chat_by_id(bot_id, chat_id, db, current_user)
+@chats_router.get("/{chat_id}", response_model=Chat)
+def get_all_messages_for_chat(chat_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    output = chat_crud.get_chat_by_id(chat_id, db, current_user)
     return output

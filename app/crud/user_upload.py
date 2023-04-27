@@ -10,6 +10,10 @@ def get_user_uploads(db: Session, current_user: schemas.User):
     return db.query(UserUpload).filter(UserUpload.user_id == current_user.id).all()
 
 
+def get_user_uploads_by_bot_id(bot_id: int, db: Session, current_user: schemas.User):
+    return db.query(UserUpload).filter(UserUpload.user_id == current_user.id, UserUpload.bot_id == bot_id).all()
+
+
 def delete_user_upload(id: int, db: Session, current_user: schemas.User):
     uu = db.query(UserUpload).get(id)
     if uu.user_id != current_user.id:
