@@ -182,7 +182,7 @@ class StripeService():
 
                 self.db.commit()
             # handle renewal
-            elif subscription.deleted_at and not event['data']['object']['cancel_at_period_end']:
+            elif subscription and subscription.deleted_at and not event['data']['object']['cancel_at_period_end']:
                 subscription.deleted_at = None
 
                 self.db.commit()
