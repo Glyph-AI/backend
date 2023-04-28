@@ -4,3 +4,4 @@ from .pdf_processor import PdfProcessor
 from .image_processor import ImageProcessor
 from .audio_processor import AudioProcessor
 from .stripe_service import StripeService
+from .openai_service import OpenaiService

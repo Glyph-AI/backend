@@ -20,7 +20,13 @@ class Tool(Base):
     bots = association_proxy("bot_tools", "bots")
 
     def import_tool(self):
-        module_name = f"app.tools.{self.internal_filename}"
+        module_name = f"app.services.tools.{self.internal_filename}"
         module = importlib.import_module(module_name)
         tool_class = getattr(module, self.class_name)
         return tool_class
+
+    def format(self):
+        return {
+            "name": self.name,
+            "description": self.description
+        }

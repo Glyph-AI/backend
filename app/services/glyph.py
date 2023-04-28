@@ -37,52 +37,14 @@ class Glyph:
         self.search = GoogleSearchAPIWrapper()
         self.max_iter = 5
         self.bot = self.db.query(Bot).get(bot_id)
-        self.initial_tools = [
-            Tool(
-                name="Document Search",
-                description="Searches Documents the user has uploaded to the database.",
-                func=self.document_search
-            ),
-            Tool(
-                name="CodeGPT",
-                description="Handles computer code related requests.",
-                func=self.ask_chat
-            ),
-            Tool(
-                name="Respond to User",
-                description="If you have the answer to the question, this tool provides it to the user.",
-                func=None
-            )
-        ]
-        self.tools = [
-            Tool(
-                name="Document Search",
-                description="Searches Documents the user has uploaded to the database.",
-                func=self.document_search
-            ),
-            Tool(
-                name="Google Search",
-                description="Searches Google for relevant information.",
-                func=self.search.run
-            ),
-            Tool(
-                name="CodeGPT",
-                description="Handles computer code related requests.",
-                func=self.ask_chat
-            ),
-            Tool(
-                name="Respond to User",
-                description="If you have the answer to the question, this tool provides it to the user.",
-                func=None
-            )
-        ]
+        self.tools = self.bot.enabled_tools
 
     def process_message(self, user_message: str):
         try:
             self.archive()
             scratchpad = "PREVIOUS ACTIONS:"
             prompt = self.format_prompt(
-                user_message, "", [i.format() for i in self.get_initial_tools()])
+                user_message, "", [i.format() for i in self.tools])
             initial_obj = self.build_chatgpt_query_object(prompt)
             internal_message_array = [initial_obj]
             chatgpt_response = self.chatgpt_request(internal_message_array)
@@ -115,14 +77,6 @@ class Glyph:
             return "I'm sorry, an internal error occurred, please try again!"
 
         return glyph_response
-
-    def get_initial_tools(self):
-        embeddings = self.db.query(Embedding).filter(
-            Embedding.bot_id == self.bot_id).all()
-        if len(embeddings) == 0:
-            return self.tools
-
-        return self.initial_tools
 
     def archive(self):
         unarchived = self.db.query(ChatMessage).filter(
@@ -217,18 +171,20 @@ class Glyph:
 
         return "No Relevant Document Information Found"
 
-    def search_for_tool_func(self, tool_name):
+    def search_for_tool(self, tool_name):
         for tool in self.tools:
             if tool.name == tool_name:
-                return tool.func
+                return tool
 
     def handle_response(self, response):
         action, action_input = self.parse_response(response)
-        if action == "Respond to User":
-            return action, action_input
 
-        tool_func = self.search_for_tool_func(action)
-        response = tool_func(action_input)
+        # get tool
+        print(action, action_input)
+        tool = self.search_for_tool(action)
+        tool_class = tool.import_tool()
+        tool_obj = tool_class(self.db, self.bot_id, self.chat_id)
+        response = tool_obj.execute(action_input)
 
         return action, response
 
