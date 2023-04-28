@@ -27,6 +27,8 @@ async def get_user(id: int, db: Session = Depends(get_db), current_user: User = 
 
 @users_router.get("/profile", response_model=User)
 async def profile(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # user = User(**current_user.__dict__,
+    #             is_subscribed=current_user.is_subscribed)
     return current_user
 
 
