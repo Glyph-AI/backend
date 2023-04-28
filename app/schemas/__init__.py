@@ -4,3 +4,4 @@ from .chat import *
 from .chat_message import *
 from .user_upload import *
 from .persona import *
+from .tool import *

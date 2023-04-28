@@ -17,6 +17,7 @@ class Bot(Base):
                         server_default=func.now())
 
     users = association_proxy("bot_users", "users")
+    tools = association_proxy("bot_tools", "tools")
     embeddings = relationship("Embedding", back_populates="bot")
     chats = relationship("Chat", back_populates="bot")
     user_uploads = relationship("UserUpload", back_populates="bot")
@@ -26,6 +27,10 @@ class Bot(Base):
     def users(self):
         bot_users = self.bot_users
         return [i.user for i in bot_users]
+
+    @property
+    def enabled_tools(self):
+        return [t for t in self.bot_tools if t.enabled]
 
     @property
     def creator_id(self):
