@@ -12,6 +12,7 @@ class Bot(Base):
     name = Column(String, nullable=False)
     sharing_enabled = Column(Boolean, default=False)
     sharing_code = Column(String, unique=True)
+    persona_id = Column(Integer, ForeignKey("personas.id"))
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
 
@@ -19,6 +20,7 @@ class Bot(Base):
     embeddings = relationship("Embedding", back_populates="bot")
     chats = relationship("Chat", back_populates="bot")
     user_uploads = relationship("UserUpload", back_populates="bot")
+    persona = relationship("Persona", back_populates="bots")
 
     @property
     def users(self):

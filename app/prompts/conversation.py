@@ -1,4 +1,6 @@
 conversation_prompt = """
+{persona_prompt}
+
 RESPONSE FORMAT:
 ```
 {{

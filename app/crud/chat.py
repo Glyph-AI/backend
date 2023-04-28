@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from sqlalchemy import and_
 from app.models import Chat, ChatMessage, Bot, BotUser
+from app.crud import chat_message as chat_message_crud
 import app.schemas as schemas
 
 
@@ -24,6 +25,10 @@ def create_chat(chat_data: schemas.ChatBase, db: Session, current_user: schemas.
     db.add(db_chat)
     db.commit()
     db.refresh(db_chat)
+    # add initial_message
+    cm = schemas.ChatMessageCreateHidden(
+        role="assistant", content=db_chat.bot.persona.initial_message, chat_id=db_chat.id, hidden=False)
+    chat_message_crud.create_chat_message(db, cm)
     return db_chat
 
 
