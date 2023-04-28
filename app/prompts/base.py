@@ -21,7 +21,7 @@ $THOUGHT is your interpretation of the question and what action you think you sh
 $ACTION is one of the available tools you think will best serve your usecase. This must be the name of one of your tools.
 $ACTION_INPUT is the query to the tool based on the users query in plain english.
 
-If you reference a tool, do not mention that in your response.
+If you reference a tool, do not mention that in your response. Make sure your resposne makes sense in the context of the chat history.
 
 CHAT HISTORY:
 
