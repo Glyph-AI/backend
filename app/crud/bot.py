@@ -1,7 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
-from app.models import Bot, BotUser
+from app.models import Bot, BotUser, Tool, BotTool
 import app.schemas as schemas
 from app.errors import Errors
 
@@ -77,5 +77,27 @@ def add_shared_bot(sharing_data: schemas.BotSharingAdd, db: Session, current_use
     db.add(db_bot_user)
     db.commit()
     db.commit()
+    db.refresh(bot)
+    return bot
+
+
+def change_tool_status(bot_id: int, tool_id: int, db: Session, current_user: schemas.User):
+    bot = filter_bots(db, current_user).filter(Bot.id == bot_id).one_or_none()
+    if bot is None:
+        raise Errors.credentials_error
+
+    tool = db.query(Tool).get(tool_id)
+    bot_tool = db.query(BotTool).filter(BotTool.tool_id ==
+                                        tool_id, BotTool.bot_id == bot_id).one_or_none()
+    if bot_tool is None:
+        # create and enable bot_tool
+        new_bt = BotTool(bot_id=bot_id, tool_id=tool_id, enabled=True)
+        db.add(new_bt)
+        db.commit()
+
+    else:
+        bot_tool.enabled = not bot_tool.enabled
+        db.commit()
+
     db.refresh(bot)
     return bot

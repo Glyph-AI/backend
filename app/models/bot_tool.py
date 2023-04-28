@@ -15,5 +15,5 @@ class BotTool(Base):
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
 
-    bot = relationship("Bot", backref="tools")
-    tool = relationship("Tool", backref="bots")
+    bot = relationship("Bot", backref="bot_tools")
+    tool = relationship("Tool", backref="bot_tools")

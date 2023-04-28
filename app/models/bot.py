@@ -30,7 +30,7 @@ class Bot(Base):
 
     @property
     def enabled_tools(self):
-        return [t for t in self.bot_tools if t.enabled]
+        return [t.tool for t in self.bot_tools if t.enabled]
 
     @property
     def creator_id(self):
