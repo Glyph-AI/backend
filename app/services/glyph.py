@@ -8,22 +8,10 @@ from typing import Callable
 
 from app.prompts import *
 from app.models import UserUpload, Text, Embedding, ChatMessage, ChatgptLog, Bot
+from .openai_service import OpenaiService
 
 openai.api_key = os.environ.get(
     "OPENAI_API_KEY", "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")
-
-
-class Tool:
-    def __init__(self, name: str, description: str, func: Callable):
-        self.name = name
-        self.description = description
-        self.func = func
-
-    def format(self):
-        return {
-            "name": self.name,
-            "description": self.description
-        }
 
 
 class Glyph:
@@ -34,58 +22,20 @@ class Glyph:
         self.user_id = user_id
         self.message_history_to_include = 8
         self.history_threshold = 2000
-        self.search = GoogleSearchAPIWrapper()
         self.max_iter = 5
         self.bot = self.db.query(Bot).get(bot_id)
-        self.initial_tools = [
-            Tool(
-                name="Document Search",
-                description="Searches Documents the user has uploaded to the database.",
-                func=self.document_search
-            ),
-            Tool(
-                name="CodeGPT",
-                description="Handles computer code related requests.",
-                func=self.ask_chat
-            ),
-            Tool(
-                name="Respond to User",
-                description="If you have the answer to the question, this tool provides it to the user.",
-                func=None
-            )
-        ]
-        self.tools = [
-            Tool(
-                name="Document Search",
-                description="Searches Documents the user has uploaded to the database.",
-                func=self.document_search
-            ),
-            Tool(
-                name="Google Search",
-                description="Searches Google for relevant information.",
-                func=self.search.run
-            ),
-            Tool(
-                name="CodeGPT",
-                description="Handles computer code related requests.",
-                func=self.ask_chat
-            ),
-            Tool(
-                name="Respond to User",
-                description="If you have the answer to the question, this tool provides it to the user.",
-                func=None
-            )
-        ]
+        self.tools = self.bot.enabled_tools
+        self.openai = OpenaiService(self.db, self.chat_id)
 
     def process_message(self, user_message: str):
         try:
             self.archive()
             scratchpad = "PREVIOUS ACTIONS:"
             prompt = self.format_prompt(
-                user_message, "", [i.format() for i in self.get_initial_tools()])
-            initial_obj = self.build_chatgpt_query_object(prompt)
+                user_message, "", [i.format() for i in self.tools])
+            initial_obj = self.openai.query_object(prompt)
             internal_message_array = [initial_obj]
-            chatgpt_response = self.chatgpt_request(internal_message_array)
+            chatgpt_response = self.openai.query_model(internal_message_array)
 
             iter = 0
             while True:
@@ -106,23 +56,16 @@ class Glyph:
                     tool_response=glyph_response, user_message=user_input, scratchpad=scratchpad, allowed_tools=[
                         i.format() for i in self.tools]
                 )
-                obj = self.build_chatgpt_query_object(prompt)
+                obj = self.openai.query_object(prompt)
                 internal_message_array.append(obj)
 
-                chatgpt_response = self.chatgpt_request(internal_message_array)
+                chatgpt_response = self.openai.query_model(
+                    internal_message_array)
         except Exception as e:
             print(e)
             return "I'm sorry, an internal error occurred, please try again!"
 
         return glyph_response
-
-    def get_initial_tools(self):
-        embeddings = self.db.query(Embedding).filter(
-            Embedding.bot_id == self.bot_id).all()
-        if len(embeddings) == 0:
-            return self.tools
-
-        return self.initial_tools
 
     def archive(self):
         unarchived = self.db.query(ChatMessage).filter(
@@ -153,7 +96,7 @@ class Glyph:
                   for i in range(0, len(combined_text), chunk_size-overlap)]
 
         for chunk in chunks:
-            embedding = self.embed_message(chunk)
+            embedding = self.openai.get_embedding(chunk)
 
             new_e = Embedding(
                 bot_id=self.bot_id,
@@ -171,64 +114,31 @@ class Glyph:
 
         return True
 
-    def ask_chat(self, message):
-        messages = self.db.query(ChatMessage).filter(
-            ChatMessage.chat_id == self.chat_id
-        ).order_by(
-            ChatMessage.created_at.desc()
-        ).limit(16).offset(1)
-
-        formatted = [i.format_gpt() for i in messages]
-        formatted.reverse()
-
-        response = self.chatgpt_request(formatted)
-        return response
-
     def relevancy_checker(self, query, context_pieces):
         context = []
         for c in context_pieces:
             prompt = relevancy_prompt.format(context=c, query=query)
             query_obj = self.build_chatgpt_query_object(prompt)
-            response = self.chatgpt_request([query_obj])
+            response = self.openai.query_model([query_obj])
             if response == "YES":
                 context.append(c)
 
         return context
 
-    def document_search(self, message):
-        embed = self.embed_message(message)
-        top = self.db.query(Embedding).join(Text).join(UserUpload).filter(
-            UserUpload.include_in_context == True, Embedding.bot_id == self.bot_id).order_by(Embedding.vector.l2_distance(embed)).limit(3).all()
-
-        context = [i.content for i in top]
-        # relevant_pieces = self.relevancy_checker(message, context)
-        relevant_pieces = context
-
-        if len(relevant_pieces) > 0:
-            return "\n".join(relevant_pieces)
-
-        # if len(relevant_pieces) > 0:
-        #     context = "\n".join(relevant_pieces)
-        #     prompt = document_search.format(context=context, query=message)
-
-        #     chat_message = {"role": "user", "content": prompt}
-        #     search_answer = self.chatgpt_request([chat_message])
-        #     return search_answer
-
-        return "No Relevant Document Information Found"
-
-    def search_for_tool_func(self, tool_name):
+    def search_for_tool(self, tool_name):
         for tool in self.tools:
             if tool.name == tool_name:
-                return tool.func
+                return tool
 
     def handle_response(self, response):
         action, action_input = self.parse_response(response)
-        if action == "Respond to User":
-            return action, action_input
 
-        tool_func = self.search_for_tool_func(action)
-        response = tool_func(action_input)
+        # get tool
+        print(action, action_input)
+        tool = self.search_for_tool(action)
+        tool_class = tool.import_tool()
+        tool_obj = tool_class(self.db, self.bot_id, self.chat_id)
+        response = tool_obj.execute(action_input)
 
         return action, response
 
@@ -237,7 +147,7 @@ class Glyph:
             json_response = json.loads(response)
         except Exception as e:
             json_response = {"action": "Respond to User",
-                             "action_input": "I'm sorry, an unknown exception as occurred"}
+                             "action_input": "I'm sorry, an unknown exception as occurred. Please try again!"}
 
         return json_response["action"], json_response["action_input"]
 
@@ -258,20 +168,6 @@ class Glyph:
         self.db.refresh(log)
 
         return log
-
-    def chatgpt_request(self, messages: list[dict]):
-        # log prompt and response
-        self.chatgpt_log(f"{messages}")
-
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            temperature=0.5,
-            messages=messages
-        )["choices"][0]["message"]["content"]
-
-        self.chatgpt_log(response)
-
-        return response
 
     def get_last_n_messages(self, n: int):
         messages = self.db.query(ChatMessage).filter(
@@ -310,8 +206,3 @@ class Glyph:
         )
 
         return prompt
-
-    def embed_message(self, user_message: str):
-        query_embed = openai.Embedding.create(
-            input=user_message, model="text-embedding-ada-002")['data'][0]['embedding']
-        return query_embed

@@ -4,6 +4,7 @@ from .chat import Chat
 from .user import User
 from .user_upload import UserUpload
 from .persona import Persona
+from .tool import Tool
 
 
 class BotBase(BaseModel):
@@ -27,6 +28,7 @@ class Bot(BotBase):
     created_at: datetime
     users: list[User]
     chats: list[Chat]
+    enabled_tools: list[Tool]
     persona: Persona
     user_uploads: list[UserUpload]
     creator_id: int | None = None

@@ -10,3 +10,5 @@ from .price_tier import PriceTier
 from .chatgpt_log import ChatgptLog
 from .bot_user import BotUser
 from .persona import Persona
+from .tool import Tool
+from .bot_tool import BotTool
