@@ -31,3 +31,8 @@ class Errors:
         status_code=400,
         detail="Invalid File Type"
     )
+    subscription_error = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="User not subscribed",
+        headers={"WWW-Authenticate": "Bearer"},
+    )

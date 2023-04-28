@@ -18,6 +18,7 @@ class User(UserBase):
     id: int
     created_at: datetime
     profile_picture_location: str | None = None
+    subscribed: bool
 
     class Config:
         orm_mode = True
