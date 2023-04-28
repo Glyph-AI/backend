@@ -26,7 +26,7 @@ class OpenaiService:
         self.db.commit()
         return True
 
-    def __message_history(self):
+    def message_history(self):
         messages = self.db.query(ChatMessage).filter(
             ChatMessage.chat_id == self.chat_id
         ).order_by(
@@ -38,12 +38,18 @@ class OpenaiService:
 
         return formatted
 
+    def query_object(self, content: str):
+        return {
+            "role": "user",
+            "content": content
+        }
+
     def get_embedding(self, text: str):
         return openai.Embedding.create(
             input=text, model="text-embedding-ada-002")['data'][0]['embedding']
 
-    def query_model(self):
-        messages = self.__message_history()
+    def query_model(self, messages: list[dict]):
+
         self.__chatgpt_log(f"{messages}")
 
         response = openai.ChatCompletion.create(
