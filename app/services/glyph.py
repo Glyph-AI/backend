@@ -135,19 +135,19 @@ class Glyph:
             if tool.name == tool_name:
                 return tool
             
-        tool_names = [i.name for i in self.tools]
-        proposed_tool = tool_name
-        iter = 0
-        while proposed_tool not in tool_names:
-            prompt = tool_prompt.format(tool_names=tool_names, error_tool=tool_name)
-            query_object = self.openai.query_object(prompt)
-            proposed_tool = self.openai.query_model([query_object])
-            print(proposed_tool)
-            iter += 1
-            if iter > 3:
-                raise(Exception("Could not find a valid tool"))
+        # tool_names = [i.name for i in self.tools]
+        # proposed_tool = tool_name
+        # iter = 0
+        # while proposed_tool not in tool_names:
+        #     prompt = tool_prompt.format(tool_names=tool_names, error_tool=tool_name)
+        #     query_object = self.openai.query_object(prompt)
+        #     proposed_tool = self.openai.query_model([query_object])
+        #     print(proposed_tool)
+        #     iter += 1
+        #     if iter > 3:
+        #         raise(Exception("Could not find a valid tool"))
             
-        return self.search_for_tool(proposed_tool)
+        # return self.search_for_tool(proposed_tool)
 
 
                 
