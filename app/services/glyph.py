@@ -5,6 +5,7 @@ from sqlalchemy import or_
 from langchain.utilities import GoogleSearchAPIWrapper
 import json
 from typing import Callable
+from datetime import datetime
 
 from app.prompts import *
 from app.models import UserUpload, Text, Embedding, ChatMessage, ChatgptLog, Bot
@@ -42,6 +43,8 @@ class Glyph:
 
                 action_taken, glyph_response = self.handle_response(
                     chatgpt_response)
+
+                print(glyph_response)
 
                 if action_taken == "Respond to User":
                     return glyph_response
@@ -196,13 +199,24 @@ class Glyph:
         chat_history = self.get_last_n_messages(
             self.message_history_to_include)
         prompt = base_prompt.format(
-            tools=allowed_tools, persona_prompt=self.bot.persona.prompt, user_input=user_message, chat_history=chat_history, scratchpad=scratchpad)
+            tools=allowed_tools,
+            persona_prompt=self.bot.persona.prompt,
+            user_input=user_message,
+            chat_history=chat_history,
+            scratchpad=scratchpad,
+            current_date=datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+        )
 
         return prompt
 
     def format_conversation_prompt(self, tool_response: str, user_message: str, scratchpad: str, allowed_tools: list[dict]):
         prompt = conversation_prompt.format(
-            tools=allowed_tools, persona_prompt=self.bot.persona.prompt, tool_response=tool_response, user_input=user_message, scratchpad=scratchpad,
+            tools=allowed_tools,
+            persona_prompt=self.bot.persona.prompt,
+            tool_response=tool_response,
+            user_input=user_message,
+            scratchpad=scratchpad,
+            current_date=datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
         )
 
         return prompt

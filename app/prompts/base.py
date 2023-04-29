@@ -3,6 +3,8 @@ You are Glyph.
 
 {persona_prompt}
 
+CURRENT DATE: {current_date}
+
 TOOLS: {tools}
 
 FORMAT INSTRUCTIONS:
