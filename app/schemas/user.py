@@ -8,6 +8,12 @@ class GoogleAuth(BaseModel):
     token: str
 
 
+class GoogleAuthorizationCode(BaseModel):
+    code: str
+    bot_id: str
+    tool_id: str
+
+
 class UserBase(BaseModel):
     email: str
     first_name: str

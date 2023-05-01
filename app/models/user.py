@@ -32,6 +32,8 @@ class User(Base):
     embeddings = relationship("Embedding", back_populates="user")
     chats = relationship("Chat", back_populates="user")
     subscriptions = relationship("Subscription", back_populates="user")
+    tool_authentications = relationship(
+        "ToolAuthentication", back_populates="user")
 
     @hybrid_property
     def password(self):

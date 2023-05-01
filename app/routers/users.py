@@ -7,7 +7,7 @@ import os
 from datetime import datetime, timedelta, timezone
 
 from app.dependencies import get_db, get_current_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
-from app.schemas import UserCreateSSO, User, GoogleAuth
+from app.schemas import UserCreateSSO, User, GoogleAuth, GoogleAuthorizationCode
 import app.crud.user as user_crud
 from app.errors import Errors
 from app.services import StripeService

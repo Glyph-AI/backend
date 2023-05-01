@@ -40,5 +40,6 @@ def create_app():
     app.include_router(subscriptions_router)
     app.include_router(personas_router)
     app.include_router(tools_router)
+    app.include_router(tool_auth_router)
 
     return app

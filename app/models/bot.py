@@ -22,6 +22,8 @@ class Bot(Base):
     chats = relationship("Chat", back_populates="bot")
     user_uploads = relationship("UserUpload", back_populates="bot")
     persona = relationship("Persona", back_populates="bots")
+    tool_authentications = relationship(
+        "ToolAuthentication", back_populates="bot")
 
     @property
     def users(self):

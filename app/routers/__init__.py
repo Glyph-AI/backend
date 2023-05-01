@@ -5,3 +5,4 @@ from .user_uploads import user_uploads_router
 from .subscriptions import subscriptions_router
 from .personas import personas_router
 from .tools import tools_router
+from .tool_authentication import tool_auth_router
