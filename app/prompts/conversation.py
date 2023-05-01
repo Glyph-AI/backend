@@ -1,6 +1,8 @@
 conversation_prompt = """
 {persona_prompt}
 
+CURRENT_DATE: {current_date}
+
 RESPONSE FORMAT:
 ```
 {{
