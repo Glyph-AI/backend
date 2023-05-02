@@ -35,12 +35,12 @@ def upgrade() -> None:
                     )
     op.create_index(op.f('ix_bot_users_id'), 'bot_users', ['id'], unique=False)
     op.drop_constraint('bots_user_id_fkey', 'bots', type_='foreignkey')
-    # bots = session.query(Bot).all()
-    # for b in bots:
-    #     new_bu = BotUser(bot_id=b.id, user_id=b.user_id, creator=True)
-    #     session.add(new_bu)
+    bots = session.query(Bot).all()
+    for b in bots:
+        new_bu = BotUser(bot_id=b.id, user_id=b.user_id, creator=True)
+        session.add(new_bu)
 
-    # session.commit()
+    session.commit()
     # ### end Alembic commands ###
 
 
