@@ -134,7 +134,7 @@ class Glyph:
         for tool in self.tools:
             if tool.name == tool_name:
                 return tool
-            
+
         # tool_names = [i.name for i in self.tools]
         # proposed_tool = tool_name
         # iter = 0
@@ -146,11 +146,8 @@ class Glyph:
         #     iter += 1
         #     if iter > 3:
         #         raise(Exception("Could not find a valid tool"))
-            
+
         # return self.search_for_tool(proposed_tool)
-
-
-                
 
     def handle_response(self, response):
         action, action_input = self.parse_response(response)
@@ -159,7 +156,8 @@ class Glyph:
         print(f"{action} | {action_input}")
         tool = self.search_for_tool(action)
         tool_class = tool.import_tool()
-        tool_obj = tool_class(self.db, self.bot_id, self.chat_id)
+        tool_obj = tool_class(self.db, self.bot_id,
+                              self.chat_id, tool.id, self.user_id)
         response = tool_obj.execute(action_input)
 
         return action, response

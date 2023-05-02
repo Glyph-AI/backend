@@ -13,6 +13,8 @@ class ToolAuthentication(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     tool_id = Column(Integer, ForeignKey("tools.id"))
     authorization_code = Column(String)
+    access_token = Column(String)
+    refresh_token = Column(String)
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
 

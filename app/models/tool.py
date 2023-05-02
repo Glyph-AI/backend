@@ -33,8 +33,12 @@ class Tool(Base):
         tool_class = getattr(module, self.class_name)
         return tool_class
 
+    def format_description(self):
+        cls = self.import_tool
+        return f"{self.description} {cls.__internal_query_requires}"
+
     def format(self):
         return {
             "name": self.name,
-            "description": self.description
+            "description": self.format_description()
         }
