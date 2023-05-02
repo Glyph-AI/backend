@@ -14,7 +14,7 @@ APPLICATION_SERVER = os.environ.get(
 class StripeService():
     def __init__(self, db: Session):
         self.subscription_price = os.environ.get(
-            "STRIPE_PRICE_ID", "price_1MqRWhKHkgogKyeF2oYa2oNL")
+            "STRIPE_PRICE_ID", "price_1N3LngKHkgogKyeFfnRZxEuW")
 
         self.db = db
 
