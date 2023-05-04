@@ -1,5 +1,6 @@
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from app.models import UserUpload, Embedding, Text
 import app.schemas as schemas
 from app.services import S3Service
@@ -7,11 +8,11 @@ from app.errors import Errors
 
 
 def get_user_uploads(db: Session, current_user: schemas.User):
-    return db.query(UserUpload).filter(UserUpload.user_id == current_user.id).all()
+    return db.query(UserUpload).filter(UserUpload.user_id == current_user.id, or_(UserUpload.deleted == None, not UserUpload.deleted)).all()
 
 
 def get_user_uploads_by_bot_id(bot_id: int, db: Session, current_user: schemas.User):
-    return db.query(UserUpload).filter(UserUpload.user_id == current_user.id, UserUpload.bot_id == bot_id).all()
+    return db.query(UserUpload).filter(UserUpload.user_id == current_user.id, UserUpload.bot_id == bot_id, or_(UserUpload.deleted == None, not UserUpload.deleted)).all()
 
 
 def delete_user_upload(id: int, db: Session, current_user: schemas.User):
@@ -33,13 +34,15 @@ def delete_user_upload(id: int, db: Session, current_user: schemas.User):
         s3 = S3Service()
         s3.delete_file(uu.s3_link)
 
-    db.query(UserUpload).filter(UserUpload.id == id).delete()
+    uu.deleted = True
     db.commit()
 
     return get_user_uploads(db, current_user)
 
 
 def create_user_upload(bot_id: int, db: Session, current_user: schemas.User, file: UploadFile):
+    if not current_user.can_create_files:
+        raise Errors.out_of_files
     s3 = S3Service()
     s3.create_directory("/temp")
     file_object = file.file

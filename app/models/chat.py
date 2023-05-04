@@ -2,6 +2,8 @@ from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import timedelta, datetime
+from sqlalchemy.orm.session import object_session
+
 import os
 from jose import jwt
 
@@ -23,8 +25,24 @@ class Chat(Base):
 
     user = relationship("User", back_populates="chats")
     bot = relationship("Bot", back_populates="chats")
-    chat_messages = relationship("ChatMessage", back_populates="chat")
+    chat_messages = relationship(
+        "ChatMessage", back_populates="chat")
     chatgpt_logs = relationship("ChatgptLog", back_populates="chat")
+
+    @property
+    def user_messages(self):
+        return [i for i in self.chat_messages if i.role == "user"]
+
+    @property
+    def user_message_count(self):
+        return len(self.user_messages)
+
+    def messages_in_period(self, period_start, period_end):
+        from .chat_message import ChatMessage
+        session = object_session(self)
+        query = session.query(ChatMessage).filter(ChatMessage.created_at < period_end, ChatMessage.created_at >
+                                                  period_start, ChatMessage.role == "user", ChatMessage.chat_id == self.id)
+        return query.count()
 
     @property
     def chat_token(self):

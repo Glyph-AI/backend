@@ -19,6 +19,12 @@ class User(UserBase):
     created_at: datetime
     profile_picture_location: str | None = None
     subscribed: bool
+    bots_left: int
+    messages_left: int
+    files_left: int
+    allowed_bots: int
+    allowed_messages: int
+    allowed_files: int
 
     class Config:
         orm_mode = True

@@ -15,6 +15,7 @@ class UserUpload(Base):
     bot_id = Column(Integer, ForeignKey("bots.id"))
     processed = Column(Boolean, default=False)
     include_in_context = Column(Boolean, default=True)
+    deleted = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
 

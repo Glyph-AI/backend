@@ -36,3 +36,18 @@ class Errors:
         detail="User not subscribed",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    out_of_messages = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="No more messages allowed on your current subscription",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    out_of_bots = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="No more bots allowed on your current subscription",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    out_of_files = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="No more files allowed on your current subscription",
+        headers={"WWW-Authenticate": "Bearer"},
+    )

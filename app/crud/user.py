@@ -1,11 +1,12 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from app.models import User
+from app.services import StripeService
 import app.schemas as schemas
 
 
 def get_user_by_id(db: Session, current_user: schemas.User, id: int):
-    return db.query(User).get(int)
+    return db.query(User).get(id)
 
 
 def get_user_by_email(db: Session, email):

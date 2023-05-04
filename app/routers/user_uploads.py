@@ -38,7 +38,7 @@ def upload_file(bot_id: int, file: UploadFile, chat_id: int = None, db: Session 
             hidden=False
         )
 
-        chat_message_crud.create_chat_message(db, upload_message)
+        chat_message_crud.create_chat_message(db, current_user, upload_message)
     task = process_file.delay(upload_file_record.id, chat_id)
 
     return JSONResponse({"task_id": task.id})

@@ -7,6 +7,11 @@ import bcrypt
 
 from app.db.base_class import Base
 
+FREEMIUM_BOTS = 2
+FREEMIUM_MESSAGES = 50
+FREEMIUM_FILES = 2
+SUBSCRIPTION_MESSAGES = 750
+
 
 class User(Base):
     __tablename__ = "users"
@@ -49,6 +54,68 @@ class User(Base):
     @property
     def subscribed(self):
         return len(self.active_subscriptions()) > 0
+
+    @property
+    def bots_left(self):
+        if self.subscribed:
+            return -1
+
+        return FREEMIUM_BOTS - len(self.bots)
+
+    @property
+    def messages_left(self):
+        from app.services import StripeService
+        if not self.subscribed:
+            return FREEMIUM_MESSAGES - len([i.user_messages for i in self.chats])
+
+        active_subscription_id = self.active_subscriptions()[
+            0].stripe_subscription_id
+        period_start, period_end = StripeService.get_user_current_window(
+            active_subscription_id)
+        user_messages_in_period = len([i.messages_in_period(
+            period_start, period_end) for i in self.chats])
+
+        return SUBSCRIPTION_MESSAGES - user_messages_in_period
+
+    @property
+    def files_left(self):
+        if not self.subscribed:
+            return FREEMIUM_FILES - len(self.user_uploads)
+
+        return -1
+
+    @property
+    def allowed_files(self):
+        if self.subscribed:
+            return -1
+
+        return FREEMIUM_FILES
+
+    @property
+    def allowed_bots(self):
+        if self.subscribed:
+            return -1
+
+        return FREEMIUM_BOTS
+
+    @property
+    def allowed_messages(self):
+        if self.subscribed:
+            return SUBSCRIPTION_MESSAGES
+
+        return FREEMIUM_MESSAGES
+
+    @property
+    def can_create_messages(self):
+        return self.messages_left > 0
+
+    @property
+    def can_create_bots(self):
+        return self.subscribed or self.bots_left > 0
+
+    @property
+    def can_create_files(self):
+        return self.subscribed or self.files_left > 0
 
     def active_subscriptions(self):
         return [s for s in self.subscriptions if s.deleted_at == None]
