@@ -28,7 +28,7 @@ def create_chat(chat_data: schemas.ChatBase, db: Session, current_user: schemas.
     # add initial_message
     cm = schemas.ChatMessageCreateHidden(
         role="assistant", content=db_chat.bot.persona.initial_message, chat_id=db_chat.id, hidden=False)
-    chat_message_crud.create_chat_message(db, cm)
+    chat_message_crud.create_chat_message(db, current_user, cm)
     return db_chat
 
 

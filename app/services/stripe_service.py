@@ -14,7 +14,7 @@ APPLICATION_SERVER = os.environ.get(
 class StripeService():
     def __init__(self, db: Session):
         self.subscription_price = os.environ.get(
-            "STRIPE_PRICE_ID", "price_1N3LngKHkgogKyeFfnRZxEuW")
+            "STRIPE_PRICE_ID", "price_1MqRWhKHkgogKyeF2oYa2oNL")
 
         self.db = db
 
@@ -206,3 +206,16 @@ class StripeService():
         stripe.Subscription.delete(subscription.subscriptpion_item_id)
 
         return True
+
+    @classmethod
+    def get_user_current_window(self, subscription_id):
+        # get the full subscription object from stripe
+        stripe_subscription = stripe.Subscription.retrieve(subscription_id)
+
+        # return period start and end
+        period_start = datetime.fromtimestamp(
+            stripe_subscription["current_period_start"])
+        period_end = datetime.fromtimestamp(
+            stripe_subscription["current_period_end"])
+
+        return period_start, period_end
