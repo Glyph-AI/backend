@@ -7,6 +7,11 @@ class Errors:
         detail="Incorrect username or password",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    creation_error = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Error creating user",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     credentials_error = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not verify credentials",

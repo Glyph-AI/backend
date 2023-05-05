@@ -17,6 +17,7 @@ COOKIE_DOMAIN = os.environ.get("COOKIE_DOMAIN", "localhost")
 
 users_router = APIRouter(tags=["User API"])
 
+
 def set_cookies(user):
     access_token = create_access_token(data={"sub": user.email})
     response = JSONResponse(
@@ -50,34 +51,36 @@ async def get_user(id: int, db: Session = Depends(get_db), current_user: User = 
 
     return current_user
 
+
 @users_router.post("/users", response_model=User)
 async def create_user(user_create_data: UserCreate, db: Session = Depends(get_db)):
     # make sure user doesn't already exist
     if db.query(models.User).filter(models.User.email == user_create_data.email).count() > 0:
-        raise Errors.credentials_error
-    
+        raise Errors.creation_error
+
     new_user = user_crud.create_user(db, user_create_data)
     return new_user
 
+
 @users_router.post("/login")
 async def login_user(user_login_info: UserLogin, db: Session = Depends(get_db)):
-    possible_user = db.query(models.User).filter(models.User.email == user_login_info.email).first()
+    possible_user = db.query(models.User).filter(
+        models.User.email == user_login_info.email).first()
     print("-" * 80)
     print(possible_user)
     if possible_user is None:
         raise Errors.login_error
-    
+
     if possible_user.google_user_id is not None:
         raise Errors.user_exists_sso
-    
+
     if not possible_user.check_password(user_login_info.password):
         raise Errors.login_error
-    
+
     response = set_cookies(possible_user)
 
     return response
-    
-    
+
 
 @users_router.get("/profile", response_model=User)
 async def profile(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
