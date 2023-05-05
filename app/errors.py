@@ -51,3 +51,8 @@ class Errors:
         detail="No more files allowed on your current subscription",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    user_exists_sso = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="This user already exists via SSO",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
