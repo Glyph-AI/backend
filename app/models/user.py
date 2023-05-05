@@ -28,6 +28,7 @@ class User(Base):
     allow_public_profile_picture = Column(Boolean, default=False)
     stripe_customer_id = Column(String)
     is_current = Column(Boolean, default=False)
+    tour_completed = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
 
