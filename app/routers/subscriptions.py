@@ -30,13 +30,8 @@ async def get_checkout_session(bill_cycle: BillCycle, db: Session = Depends(get_
 async def get_customer_portal_session(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     stripe_svc = StripeService(db)
 
-    url = ""
-    if current_user.subscribed:
-        url = stripe_svc.create_portal_session(
-            current_user.stripe_customer_id, redirect_url="")
-    else:
-        url = stripe_svc.create_checkout_session(
-            current_user.stripe_customer_id, "")
+    url = stripe_svc.create_portal_session(
+        current_user.stripe_customer_id, redirect_url="")
 
     return JSONResponse(content={"url": url})
 
