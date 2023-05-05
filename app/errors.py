@@ -7,6 +7,11 @@ class Errors:
         detail="Incorrect username or password",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    creation_error = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Error creating user",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     credentials_error = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not verify credentials",
@@ -49,5 +54,10 @@ class Errors:
     out_of_files = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="No more files allowed on your current subscription",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    user_exists_sso = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="This user already exists via SSO",
         headers={"WWW-Authenticate": "Bearer"},
     )
