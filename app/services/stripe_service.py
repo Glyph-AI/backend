@@ -13,9 +13,6 @@ APPLICATION_SERVER = os.environ.get(
 
 class StripeService():
     def __init__(self, db: Session):
-        self.subscription_price = os.environ.get(
-            "STRIPE_PRICE_ID", "price_1MqRWhKHkgogKyeF2oYa2oNL")
-
         self.db = db
 
     def create_customer(self, user):
@@ -31,15 +28,18 @@ class StripeService():
         user.stripe_customer_id = customer["id"]
         self.db.commit()
 
-    def create_checkout_session(self, stripe_id: str, redirect_url: str = ""):
+    def create_checkout_session(self, stripe_id: str, price_name: str = "Monthly", redirect_url: str = ""):
         if redirect_url == "":
             redirect_url = APPLICATION_SERVER
+
+        price_id = self.db.query(PriceTier).filter(
+            PriceTier.name == price_name).first().id
         session = stripe.checkout.Session.create(
             success_url=f"{redirect_url}?success=true",
             cancel_url=redirect_url,
             mode="subscription",
             line_items=[{
-                "price": self.subscription_price,
+                "price": price_id,
                 "quantity": 1
             }],
             customer=stripe_id
