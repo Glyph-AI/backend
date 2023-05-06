@@ -25,6 +25,9 @@ class User(UserBase):
     created_at: datetime
     profile_picture_location: str | None = None
     subscribed: bool
+    bot_count: int
+    message_count: int
+    file_count: int
     bots_left: int
     messages_left: int
     files_left: int
