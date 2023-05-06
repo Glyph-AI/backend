@@ -43,10 +43,9 @@ class Glyph:
             iter = 0
             while True:
 
-                action_taken, glyph_response = self.handle_response(
+                action_taken, glyph_response, respond_direct = self.handle_response(
                     chatgpt_response)
-
-                if action_taken == "Respond to User":
+                if respond_direct:
                     return glyph_response
 
                 iter += 1
@@ -143,7 +142,7 @@ class Glyph:
         tool_obj = tool_class(self.db, self.bot_id, self.chat_id)
         response = tool_obj.execute(action_input)
 
-        return action, response
+        return action, response, tool_class.respond_direct
 
     def parse_response(self, response):
         try:
