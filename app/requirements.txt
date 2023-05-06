@@ -29,3 +29,5 @@ langchain
 google-search-results
 tesserocr
 googlesearch-python
+pytest
+requests
