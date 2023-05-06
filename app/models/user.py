@@ -56,10 +56,14 @@ class User(Base):
     @property
     def subscribed(self):
         return len(self.active_subscriptions()) > 0
+    
+    @property
+    def subscription_in_good_standing(self):
+        return self.subscribed and self.is_current
 
     @property
     def bots_left(self):
-        if self.subscribed:
+        if self.subscription_in_good_standing:
             return -1
 
         return FREEMIUM_BOTS - len(self.bots)
@@ -67,7 +71,7 @@ class User(Base):
     @property
     def message_count(self):
         from app.services import StripeService
-        if not self.subscribed:
+        if not self.subscription_in_good_standing:
             return sum([len(i.user_messages) for i in self.chats])
         
         active_subscription = self.active_subscriptions()[0]
@@ -91,29 +95,32 @@ class User(Base):
     @property
     def messages_left(self):
         message_count = self.message_count
-        active_subscription = self.active_subscriptions()[0]
-        if active_subscription.price_tier.name == "Annual":
-            return ANNUAL_SUBSCRIPTION_MESSAGES - message_count
+        if self.subscription_in_good_standing:
+            active_subscription = self.active_subscriptions()[0]
+            if active_subscription.price_tier.name == "Annual":
+                return ANNUAL_SUBSCRIPTION_MESSAGES - message_count
 
-        return SUBSCRIPTION_MESSAGES - message_count
+            return SUBSCRIPTION_MESSAGES - message_count
+
+        return FREEMIUM_MESSAGES - self.message_count
 
     @property
     def files_left(self):
-        if not self.subscribed:
+        if not self.subscription_in_good_standing:
             return FREEMIUM_FILES - len(self.user_uploads)
 
         return -1
 
     @property
     def allowed_files(self):
-        if self.subscribed:
+        if self.subscription_in_good_standing:
             return -1
 
         return FREEMIUM_FILES
 
     @property
     def allowed_bots(self):
-        if self.subscribed:
+        if self.subscription_in_good_standing:
             return -1
 
         return FREEMIUM_BOTS
@@ -121,7 +128,7 @@ class User(Base):
     @property
     def allowed_messages(self):
         active_subscription = self.active_subscriptions()[0]
-        if self.subscribed:
+        if self.subscription_in_good_standing:
             if active_subscription.price_tier.name == "Annual":
                 return ANNUAL_SUBSCRIPTION_MESSAGES
             
@@ -135,11 +142,11 @@ class User(Base):
 
     @property
     def can_create_bots(self):
-        return self.subscribed or self.bots_left > 0
+        return self.subscription_in_good_standing or self.bots_left > 0
 
     @property
     def can_create_files(self):
-        return self.subscribed or self.files_left > 0
+        return self.subscription_in_good_standing or self.files_left > 0
     
     @property
     def subscription_canceled(self):
