@@ -34,6 +34,8 @@ class User(UserBase):
     allowed_bots: int
     allowed_messages: int
     allowed_files: int
+    subscription_canceled: bool
+    is_current: bool
 
     class Config:
         orm_mode = True
