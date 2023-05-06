@@ -1,7 +1,6 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from langchain.schema import AIMessage, HumanMessage, SystemMessage
 
 from app.db.base_class import Base
 
@@ -36,11 +35,3 @@ class ChatMessage(Base):
             return f"User: {self.content}"
         else:
             return f"System: {self.content}"
-
-    def format_langchain(self):
-        if self.role == "assistant":
-            return AIMessage(content=self.content)
-        elif self.role == "user":
-            return HumanMessage(content=self.content)
-        else:
-            return SystemMessage(content=self.content)

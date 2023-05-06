@@ -7,3 +7,5 @@ from .bot_user import BotUserFactory
 from .user_upload import UserUploadFactory
 from .chat import ChatFactory
 from .chat_message import ChatMessageFactory
+from .tool import ToolFactory
+from .bot_tool import BotToolFactory
