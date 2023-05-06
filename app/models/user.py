@@ -11,6 +11,7 @@ FREEMIUM_BOTS = 2
 FREEMIUM_MESSAGES = 50
 FREEMIUM_FILES = 2
 SUBSCRIPTION_MESSAGES = 750
+ANNUAL_SUBSCRIPTION_MESSAGES = SUBSCRIPTION_MESSAGES * 12
 
 
 class User(Base):
@@ -66,14 +67,18 @@ class User(Base):
     def messages_left(self):
         from app.services import StripeService
         if not self.subscribed:
-            return FREEMIUM_MESSAGES - len([i.user_messages for i in self.chats])
+            return FREEMIUM_MESSAGES - sum([len(i.user_messages) for i in self.chats])
 
+        active_subscription = self.active_subscriptions[0]
         active_subscription_id = self.active_subscriptions()[
             0].stripe_subscription_id
         period_start, period_end = StripeService.get_user_current_window(
             active_subscription_id)
         user_messages_in_period = len([i.messages_in_period(
             period_start, period_end) for i in self.chats])
+
+        if active_subscription.price_tier.name == "Annual":
+            return ANNUAL_SUBSCRIPTION_MESSAGES - user_messages_in_period
 
         return SUBSCRIPTION_MESSAGES - user_messages_in_period
 

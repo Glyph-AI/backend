@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from sqlalchemy.sql import func
 from sqlalchemy.sql import text
 from app.db.base_class import Base
@@ -14,6 +14,7 @@ class Tool(Base):
     class_name = Column(String, nullable=False)
     internal_filename = Column(String, nullable=False)
     description = Column(String, nullable=False)
+    user_configurable = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
 
