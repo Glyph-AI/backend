@@ -46,8 +46,6 @@ class Glyph:
                 action_taken, glyph_response = self.handle_response(
                     chatgpt_response)
 
-                print(glyph_response)
-
                 if action_taken == "Respond to User":
                     return glyph_response
 
@@ -56,7 +54,7 @@ class Glyph:
                     return "Max Internal Iterations Reached"
 
                 scratchpad += f"\n\n{chatgpt_response}"
-                user_input = f"What is your next action based on the response from the tool? If you have the answer, use the Respond to User tool."
+                user_input = f"""What is your next action based on the response from the tool? If you have the answer, use the Respond to User tool. If the last tool used was Text Generation, return the exact results from the Text Generation to the user via Respond to User. DO NOT MODIFY THEM."""
                 prompt = self.format_conversation_prompt(
                     tool_response=glyph_response, user_message=user_input, scratchpad=scratchpad, allowed_tools=[
                         i.format() for i in self.tools]
@@ -134,23 +132,6 @@ class Glyph:
         for tool in self.tools:
             if tool.name == tool_name:
                 return tool
-            
-        # tool_names = [i.name for i in self.tools]
-        # proposed_tool = tool_name
-        # iter = 0
-        # while proposed_tool not in tool_names:
-        #     prompt = tool_prompt.format(tool_names=tool_names, error_tool=tool_name)
-        #     query_object = self.openai.query_object(prompt)
-        #     proposed_tool = self.openai.query_model([query_object])
-        #     print(proposed_tool)
-        #     iter += 1
-        #     if iter > 3:
-        #         raise(Exception("Could not find a valid tool"))
-            
-        # return self.search_for_tool(proposed_tool)
-
-
-                
 
     def handle_response(self, response):
         action, action_input = self.parse_response(response)
@@ -168,6 +149,7 @@ class Glyph:
         try:
             json_response = json.loads(response)
         except Exception as e:
+            print(e, response)
             json_response = {"action": "Respond to User",
                              "action_input": "I'm sorry, an unknown exception as occurred. Please try again!"}
 
@@ -230,10 +212,14 @@ class Glyph:
         return prompt
 
     def format_conversation_prompt(self, tool_response: str, user_message: str, scratchpad: str, allowed_tools: list[dict]):
+        chat_history = self.get_last_n_messages(
+            self.message_history_to_include)
+       
         prompt = conversation_prompt.format(
             tools=allowed_tools,
             persona_prompt=self.bot.persona.prompt,
             tool_response=tool_response,
+            chat_history=chat_history,
             user_input=user_message,
             scratchpad=scratchpad,
             current_date=datetime.now().strftime("%m/%d/%Y, %H:%M:%S")

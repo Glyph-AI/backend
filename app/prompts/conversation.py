@@ -14,6 +14,10 @@ RESPONSE FORMAT:
 
 TOOLS: {tools}
 
+CHAT HISTORY:
+
+{chat_history}
+
 TOOL_RESPONSE: {tool_response}
 
 USER INPUT: {user_input}
