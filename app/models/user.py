@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql import func
+from datetime import datetime
 import bcrypt
 
 from app.db.base_class import Base
@@ -54,7 +55,7 @@ class User(Base):
 
     @property
     def subscribed(self):
-        return len(self.active_subscriptions()) > 0
+        return len(self.active_subscriptions()) > 0 and self.is_current
 
     @property
     def bots_left(self):
@@ -141,4 +142,4 @@ class User(Base):
         return self.subscribed or self.files_left > 0
 
     def active_subscriptions(self):
-        return [s for s in self.subscriptions if s.deleted_at == None]
+        return [s for s in self.subscriptions if s.deleted_at <= datetime.now()]
