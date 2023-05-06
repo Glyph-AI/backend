@@ -153,6 +153,9 @@ class User(Base):
     
     @property
     def subscription_canceled(self):
+        if len(self.active_subscriptions) == 0:
+            return False
+    
         if self.active_subscriptions()[0].deleted_at:
             return True
         
