@@ -62,25 +62,39 @@ class User(Base):
             return -1
 
         return FREEMIUM_BOTS - len(self.bots)
+    
+    @property
+    def message_count(self):
+        from app.services import StripeService
+        if not self.subscribed:
+            return sum([len(i.user_messages) for i in self.chats])
+        
+        active_subscription = self.active_subscriptions()[0]
+        active_subscription_id = active_subscription.stripe_subscription_id
+        period_start, period_end = StripeService.get_user_current_window(
+            active_subscription_id)
+
+        user_messages_in_period = sum([i.messages_in_period(
+            period_start, period_end) for i in self.chats])
+
+        return user_messages_in_period
+    
+    @property
+    def bot_count(self):
+        return len(self.bots)
+    
+    @property
+    def file_count(self):
+        return len(self.user_uploads)
 
     @property
     def messages_left(self):
-        from app.services import StripeService
-        if not self.subscribed:
-            return FREEMIUM_MESSAGES - sum([len(i.user_messages) for i in self.chats])
-
+        message_count = self.message_count
         active_subscription = self.active_subscriptions()[0]
-        active_subscription_id = self.active_subscriptions()[
-            0].stripe_subscription_id
-        period_start, period_end = StripeService.get_user_current_window(
-            active_subscription_id)
-        user_messages_in_period = len([i.messages_in_period(
-            period_start, period_end) for i in self.chats])
-
         if active_subscription.price_tier.name == "Annual":
-            return ANNUAL_SUBSCRIPTION_MESSAGES - user_messages_in_period
+            return ANNUAL_SUBSCRIPTION_MESSAGES - message_count
 
-        return SUBSCRIPTION_MESSAGES - user_messages_in_period
+        return SUBSCRIPTION_MESSAGES - message_count
 
     @property
     def files_left(self):
@@ -105,7 +119,11 @@ class User(Base):
 
     @property
     def allowed_messages(self):
+        active_subscription = self.active_subscriptions()[0]
         if self.subscribed:
+            if active_subscription.price_tier.name == "Annual":
+                return ANNUAL_SUBSCRIPTION_MESSAGES
+            
             return SUBSCRIPTION_MESSAGES
 
         return FREEMIUM_MESSAGES
