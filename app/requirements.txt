@@ -25,7 +25,9 @@ pdf2image
 pillow
 pytesseract
 stripe
-langchain
 google-search-results
 tesserocr
 googlesearch-python
+pytest
+requests
+pytest-mock

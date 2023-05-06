@@ -2,7 +2,6 @@ import openai
 import os
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
-from langchain.utilities import GoogleSearchAPIWrapper
 import json
 from typing import Callable
 from datetime import datetime
