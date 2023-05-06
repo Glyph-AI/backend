@@ -66,7 +66,7 @@ class User(Base):
     def messages_left(self):
         from app.services import StripeService
         if not self.subscribed:
-            return FREEMIUM_MESSAGES - len([i.user_messages for i in self.chats])
+            return FREEMIUM_MESSAGES - sum([len(i.user_messages) for i in self.chats])
 
         active_subscription_id = self.active_subscriptions()[
             0].stripe_subscription_id
