@@ -24,7 +24,7 @@ def start_application():
 
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL_test")
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+    SQLALCHEMY_DATABASE_URL
 )
 # Use connect_args parameter only with sqlite
 SessionTesting = sessionmaker(autocommit=False, autoflush=False, bind=engine)

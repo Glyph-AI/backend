@@ -71,6 +71,9 @@ class User(Base):
     @property
     def message_count(self):
         from app.services import StripeService
+        if len(self.chats) == 0:
+            return 0
+
         if not self.subscription_in_good_standing:
             return sum([len(i.user_messages) for i in self.chats])
         
@@ -127,8 +130,8 @@ class User(Base):
 
     @property
     def allowed_messages(self):
-        active_subscription = self.active_subscriptions()[0]
         if self.subscription_in_good_standing:
+            active_subscription = self.active_subscriptions()[0]
             if active_subscription.price_tier.name == "Annual":
                 return ANNUAL_SUBSCRIPTION_MESSAGES
             

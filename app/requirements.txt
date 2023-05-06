@@ -31,3 +31,4 @@ tesserocr
 googlesearch-python
 pytest
 requests
+pytest-mock
