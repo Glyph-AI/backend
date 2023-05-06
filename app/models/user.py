@@ -55,6 +55,8 @@ class User(Base):
 
     @property
     def subscribed(self):
+        print("-" * 80)
+        print(self.active_subscriptions(), self.is_current)
         return len(self.active_subscriptions()) > 0 and self.is_current
 
     @property
@@ -140,6 +142,14 @@ class User(Base):
     @property
     def can_create_files(self):
         return self.subscribed or self.files_left > 0
+    
+    @property
+    def subscription_canceled(self):
+        if self.active_subscriptions()[0].deleted_at:
+            return True
+        
+        return False
 
     def active_subscriptions(self):
-        return [s for s in self.subscriptions if s.deleted_at <= datetime.now()]
+        return [s for s in self.subscriptions if s.deleted_at is None or s.deleted_at <= datetime.now()]
+
