@@ -69,7 +69,7 @@ class User(Base):
         if not self.subscribed:
             return FREEMIUM_MESSAGES - sum([len(i.user_messages) for i in self.chats])
 
-        active_subscription = self.active_subscriptions[0]
+        active_subscription = self.active_subscriptions()[0]
         active_subscription_id = self.active_subscriptions()[
             0].stripe_subscription_id
         period_start, period_end = StripeService.get_user_current_window(
