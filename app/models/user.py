@@ -55,9 +55,7 @@ class User(Base):
 
     @property
     def subscribed(self):
-        print("-" * 80)
-        print(self.active_subscriptions(), self.is_current)
-        return len(self.active_subscriptions()) > 0 and self.is_current
+        return len(self.active_subscriptions()) > 0
 
     @property
     def bots_left(self):
