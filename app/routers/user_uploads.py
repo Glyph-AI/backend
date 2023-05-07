@@ -45,10 +45,7 @@ def upload_file(bot_id: int, file: UploadFile, chat_id: int = None, db: Session 
 
 
 @user_uploads_router.get("/user_uploads", response_model=list[UserUpload])
-def get_user_uploads(bot_id: int = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    if bot_id:
-        return user_upload_crud.get_user_uploads_by_bot_id(bot_id, db, current_user)
-
+def get_user_uploads(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return user_upload_crud.get_user_uploads(db, current_user)
 
 

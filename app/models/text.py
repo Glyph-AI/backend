@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from app.db.base_class import Base
 
@@ -14,6 +15,7 @@ class Text(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     user_upload_id = Column(Integer, ForeignKey(
         "user_uploads.id"), nullable=True)
+    _name = Column(String)
     content = Column(Text, nullable=False)
     text_type = Column(String, default="file") # file, note, chat_history
     history_chat_id = Column(Integer, ForeignKey("chats.id"))
@@ -25,6 +27,17 @@ class Text(Base):
     bots = association_proxy("bot_texts", "bots")
     related_chat = relationship("Chat", back_populates="texts", foreign_keys=[history_chat_id])
     embeddings = relationship("Embedding", back_populates="text")
+
+    @hybrid_property
+    def name(self):
+        if self.name:
+            return self.name
+        
+        return self.user_upload.filename
+    
+    @name.setter
+    def name(self, name_string):
+        self._name = name_string
 
     def refresh_embeddings(self):
         self.embeddings.delete()
