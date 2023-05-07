@@ -59,6 +59,8 @@ async def create_user(user_create_data: UserCreate, db: Session = Depends(get_db
         raise Errors.creation_error
 
     new_user = user_crud.create_user(db, user_create_data)
+    stripe_svc = StripeService(db)
+    stripe_svc.create_customer(new_user)
     return new_user
 
 
