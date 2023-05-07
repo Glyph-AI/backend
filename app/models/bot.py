@@ -18,9 +18,8 @@ class Bot(Base):
 
     users = association_proxy("bot_users", "users")
     tools = association_proxy("bot_tools", "tools")
-    embeddings = relationship("Embedding", back_populates="bot")
     chats = relationship("Chat", back_populates="bot")
-    user_uploads = relationship("UserUpload", back_populates="bot")
+    texts = association_proxy("bot_texts", "texts")
     persona = relationship("Persona", back_populates="bots")
 
     @property

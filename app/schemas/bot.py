@@ -30,7 +30,6 @@ class Bot(BotBase):
     chats: list[Chat]
     enabled_tools: list[Tool]
     persona: Persona
-    user_uploads: list[UserUpload]
     creator_id: int | None = None
 
     class Config:

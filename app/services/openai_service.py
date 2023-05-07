@@ -12,7 +12,7 @@ TEMPERATURE = 0.5
 
 
 class OpenaiService:
-    def __init__(self, db: Session, chat_id: int):
+    def __init__(self, db: Session | None = None, chat_id: int | None = None):
         self.chat_id = chat_id
         self.db = db
 

@@ -28,6 +28,7 @@ class Chat(Base):
     chat_messages = relationship(
         "ChatMessage", back_populates="chat")
     chatgpt_logs = relationship("ChatgptLog", back_populates="chat")
+    texts = relationship("Text", back_populates="related_chat")
 
     @property
     def user_messages(self):

@@ -32,15 +32,6 @@ def process_file(user_upload_id, chat_id):
     # get the source file
     filename = user_upload.s3_link.split("/")[1]
     local_path = f"/temp/{filename}"
-    db_message = ChatMessage(
-        chat_id=chat_id,
-        role="system",
-        content=f"{filename} processing started",
-        hidden=False
-    )
-
-    db.add(db_message)
-    db.commit()
     s3.create_directory("/temp")
     s3.download_file(local_path, f"{user_upload.s3_link}")
 
@@ -77,40 +68,11 @@ def process_file(user_upload_id, chat_id):
 
     print(f"User Upload {user_upload_id}: Embedding File")
 
-    chunk_size = 2000
-    overlap = 500
-    chunks = [decoded[i:i + chunk_size]
-              for i in range(0, len(decoded), chunk_size-overlap)]
-
-    # create an embedding for each chunk
-    for chunk in chunks:
-        vector = openai.Embedding.create(
-            input=f"{filename} | {chunk}", model="text-embedding-ada-002")['data'][0]['embedding']
-        new_e = Embedding(
-            bot_id=user_upload.bot_id,
-            text_id=new_text.id,
-            user_id=user_upload.user_id,
-            vector=vector,
-            content=chunk
-        )
-
-        db.add(new_e)
-
-    db.commit()
+    new_text.generate_embeddings()
 
     print(
         f"User Upload {user_upload_id}: Processing Complete. Generating User Notification")
 
     user_upload.processed = True
-
-    db_message = ChatMessage(
-        chat_id=chat_id,
-        role="system",
-        content=f"{filename} processing complete",
-        hidden=False
-    )
-
-    db.add(db_message)
-    db.commit()
 
     return True

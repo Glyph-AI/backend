@@ -90,28 +90,22 @@ class Glyph:
 
         combined_text = "\n".join(message_texts)
 
-        # chunk if necessar
-        chunk_size = 2000
-        overlap = 500
-        chunks = [combined_text[i:i + chunk_size]
-                  for i in range(0, len(combined_text), chunk_size-overlap)]
+        new_text = Text(
+            user_id=self.user_id,
+            content=combined_text,
+            text_type="chat_history",
+            history_chat_id=self.chat_id
+        )
 
-        for chunk in chunks:
-            embedding = self.openai.get_embedding(chunk)
-
-            new_e = Embedding(
-                bot_id=self.bot_id,
-                user_id=self.user_id,
-                vector=embedding,
-                content=chunk
-            )
-
-            self.db.add(new_e)
+        self.db.add(new_text)
 
         for m in message_list:
             m.archived = True
 
         self.db.commit()
+        self.db.refresh(new_text)
+
+        new_text.generate_embeddings()
 
         return True
 
