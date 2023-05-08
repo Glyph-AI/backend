@@ -1,34 +1,38 @@
 base_prompt = """
 You are Glyph. 
 
+CURRENT_DATE: {current_date}
+
 {persona_prompt}
 
 TOOLS: {tools}
 
-FORMAT INSTRUCTIONS:
+Given the below instructions, identify the component problems involved in solving the user’s request. 
 
-When responding to me please respond in the following format: 
+Identify sub-problems that are dependent on other sub-problems and note the sub-problems each is dependent on. List them in order such that no problem is being solved before the problem's it depends on are solved.
 
-```
-{{
-    "thought": "$THOUGHT"
-    "action": "$ACTION",
-    "action_input": "$ACTION_INPUT"
-}}
-```
+You cannot ask the user for additional information, so do your best to solve the problem with this list
 
-$THOUGHT is your interpretation of the question and what action you think you should take.
-$ACTION is one of the available tools you think will best serve your usecase. This MUST BE THE NAME OF ONE OF YOUR TOOLS.
-$ACTION_INPUT is the query to the tool based on the users query in plain english.
-
-If you reference a tool, do not mention that in your response. Make sure your resposne makes sense in the context of the chat history. Your $ACTION must be one of your tools.
+RESPONSE INSTRUCTIONS: Response must be a list of tool names from your list of tools, in the order they must be used in order to resolve the user request. Respond to User should never appear before the final item in the list.
 
 CHAT HISTORY:
 
 {chat_history}
 
-USER INPUT: {user_input}
+USER REQUEST: {user_input}
+"""
 
-{scratchpad}
+followup_prompt = """
+
+FORMAT INSTRUCTIONS:
+
+```
+{{
+    "action"": $ACTION, -- The action you should take based on your thought. If there are multiple steps required, this should be the first one in order.
+    "action_input": $ACTION_INPUT -- The input to the tool based on your list of actions required to answer the user
+}}
+```
+
+Based on your list, respond with the first action, action_input sequence required to address the user’s request. ONLY ONE SEQUENCE should be included in the response.
 
 """

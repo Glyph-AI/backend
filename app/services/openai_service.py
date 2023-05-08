@@ -8,7 +8,7 @@ openai.api_key = os.environ.get(
     "OPENAI_API_KEY", "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")
 
 MODEL = "gpt-3.5-turbo"
-TEMPERATURE = 0.5
+TEMPERATURE = 0.0
 
 
 class OpenaiService:
@@ -38,9 +38,9 @@ class OpenaiService:
 
         return formatted
 
-    def query_object(self, content: str):
+    def query_object(self, content: str, role="user"):
         return {
-            "role": "user",
+            "role": role,
             "content": content
         }
 
