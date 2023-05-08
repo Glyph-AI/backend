@@ -3,24 +3,11 @@ conversation_prompt = """
 
 CURRENT_DATE: {current_date}
 
-RESPONSE FORMAT:
-```
-{{
-    "thought": "$THOUGHT"
-    "action": "$ACTION",
-    "action_input": "$ACTION_INPUT"
-}}
-```
+TOOL_RESPONSE: 
+---
+{tool_response}
+---
 
-TOOLS: {tools}
+Based on your list, and last action, and tools response respond with an action, action_input pair for the next action.
 
-CHAT HISTORY:
-
-{chat_history}
-
-TOOL_RESPONSE: {tool_response}
-
-USER INPUT: {user_input}
-
-{scratchpad}
 """
