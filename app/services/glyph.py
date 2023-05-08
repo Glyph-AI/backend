@@ -41,9 +41,15 @@ class Glyph:
 
             iter = 0
             while True:
-
+                print("-" * 80)
+                print(chatgpt_response)
+                print("-" * 80)
                 action_taken, glyph_response, respond_direct = self.handle_response(
                     chatgpt_response)
+
+                print("-" * 80)
+                print(glyph_response)
+                print("-" * 80)
                 if respond_direct:
                     return glyph_response
 
@@ -63,7 +69,7 @@ class Glyph:
                 chatgpt_response = self.openai.query_model(
                     internal_message_array)
         except Exception as e:
-            print(e)
+            raise e
             return "I'm sorry, an internal error occurred, please try again!"
 
         return glyph_response
@@ -135,7 +141,6 @@ class Glyph:
         action, action_input = self.parse_response(response)
 
         # get tool
-        print(f"{action} | {action_input}")
         tool = self.search_for_tool(action)
         tool_class = tool.import_tool()
         tool_obj = tool_class(self.db, self.bot_id, self.chat_id)
@@ -197,7 +202,6 @@ class Glyph:
     def format_prompt(self, user_message: str, scratchpad: str, allowed_tools: list[dict]):
         chat_history = self.get_last_n_messages(
             self.message_history_to_include)
-        print(allowed_tools)
         prompt = base_prompt.format(
             tools=allowed_tools,
             persona_prompt=self.bot.persona.prompt,
@@ -207,12 +211,15 @@ class Glyph:
             current_date=datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
         )
 
+        print(">" * 80)
+        print(prompt)
+
         return prompt
 
     def format_conversation_prompt(self, tool_response: str, user_message: str, scratchpad: str, allowed_tools: list[dict]):
         chat_history = self.get_last_n_messages(
             self.message_history_to_include)
-       
+
         prompt = conversation_prompt.format(
             tools=allowed_tools,
             persona_prompt=self.bot.persona.prompt,

@@ -7,21 +7,16 @@ TOOLS: {tools}
 
 FORMAT INSTRUCTIONS:
 
-When responding to me please respond in the following format: 
+When responding, please respond in the following format:
 
 ```
 {{
-    "thought": "$THOUGHT"
-    "action": "$ACTION",
-    "action_input": "$ACTION_INPUT"
+    "thought": $THOUGHT, -- A detailed interpretation of the users's input and your thought on how you should proceed
+    "action"": $ACTION, -- The action you should take based on your thought. If there are multiple steps required, this should be the first one in order.
+    "action_input": $ACTION_INPUT -- The input to the tool based on the user's input in plain english
 }}
 ```
-
-$THOUGHT is your interpretation of the question and what action you think you should take.
-$ACTION is one of the available tools you think will best serve your usecase. This MUST BE THE NAME OF ONE OF YOUR TOOLS.
-$ACTION_INPUT is the query to the tool based on the users query in plain english.
-
-If you reference a tool, do not mention that in your response. Make sure your resposne makes sense in the context of the chat history. Your $ACTION must be one of your tools.
+Assume you know nothing and must lookup any information you require to perform the user's request. If you reference a tool, do not mention that in your response. Make sure your resposne makes sense in the context of the chat history. Your $ACTION must be one of your tools.
 
 CHAT HISTORY:
 
