@@ -5,6 +5,7 @@ from .user import User
 from .user_upload import UserUpload
 from .persona import Persona
 from .tool import Tool
+from .text import TextInfo
 
 
 class BotBase(BaseModel):
@@ -29,8 +30,8 @@ class Bot(BotBase):
     users: list[User]
     chats: list[Chat]
     enabled_tools: list[Tool]
+    enabled_texts: list[TextInfo]
     persona: Persona
-    user_uploads: list[UserUpload]
     creator_id: int | None = None
 
     class Config:

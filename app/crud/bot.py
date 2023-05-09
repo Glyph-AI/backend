@@ -1,7 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
-from app.models import Bot, BotUser, Tool, BotTool
+from app.models import Bot, BotUser, Tool, BotTool, BotText
 import app.schemas as schemas
 from app.errors import Errors
 
@@ -109,6 +109,31 @@ def change_tool_status(bot_id: int, tool_id: int, db: Session, current_user: sch
 
     else:
         bot_tool.enabled = not bot_tool.enabled
+        db.commit()
+
+    db.refresh(bot)
+    return bot
+
+
+def change_text_status(bot_id: int, text_id: int, db: Session, current_user: schemas.User):
+    bot = filter_bots(db, current_user).filter(Bot.id == bot_id).one_or_none()
+    if bot is None:
+        raise Errors.credentials_error
+
+    bot_text = db.query(BotText).filter(
+        BotText.bot_id == bot_id, BotText.text_id == text_id).one_or_none()
+
+    if bot_text is None:
+        bt = BotText(
+            bot_id=bot_id,
+            text_id=text_id,
+            include_in_context=True
+        )
+
+        db.add(bt)
+        db.commit()
+    else:
+        bot_text.include_in_context = not bot_text.include_in_context
         db.commit()
 
     db.refresh(bot)

@@ -66,9 +66,11 @@ def process_file(user_upload_id, chat_id):
 
     # create a Text object
     new_text = Text(
+        name=filename,
         user_id=user_upload.user_id,
         user_upload_id=user_upload.id,
-        content=decoded
+        content=decoded,
+        text_type="file"
     )
 
     db.add(new_text)

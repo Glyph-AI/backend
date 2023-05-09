@@ -18,9 +18,9 @@ class Bot(Base):
 
     users = association_proxy("bot_users", "users")
     tools = association_proxy("bot_tools", "tools")
+    texts = association_proxy("bot_texts", "texts")
     embeddings = relationship("Embedding", back_populates="bot")
     chats = relationship("Chat", back_populates="bot")
-    user_uploads = relationship("UserUpload", back_populates="bot")
     persona = relationship("Persona", back_populates="bots")
 
     @property
@@ -31,6 +31,10 @@ class Bot(Base):
     @property
     def enabled_tools(self):
         return [t.tool for t in self.bot_tools if t.enabled]
+
+    @property
+    def enabled_texts(self):
+        return [t.text for t in self.bot_texts if t.include_in_context]
 
     @property
     def creator_id(self):
