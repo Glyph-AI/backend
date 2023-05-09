@@ -89,7 +89,6 @@ def process_file(user_upload_id, chat_id):
         vector = openai.Embedding.create(
             input=f"{filename} | {chunk}", model="text-embedding-ada-002")['data'][0]['embedding']
         new_e = Embedding(
-            bot_id=user_upload.bot_id,
             text_id=new_text.id,
             user_id=user_upload.user_id,
             vector=vector,

@@ -40,7 +40,7 @@ def delete_user_upload(id: int, db: Session, current_user: schemas.User):
     return get_user_uploads(db, current_user)
 
 
-def create_user_upload(bot_id: int, db: Session, current_user: schemas.User, file: UploadFile):
+def create_user_upload(db: Session, current_user: schemas.User, file: UploadFile):
     if not current_user.can_create_files:
         raise Errors.out_of_files
     s3 = S3Service()
@@ -56,7 +56,6 @@ def create_user_upload(bot_id: int, db: Session, current_user: schemas.User, fil
     db_user_upload = UserUpload(
         user_id=current_user.id,
         s3_link=f"{current_user.id}/{file.filename}",
-        bot_id=bot_id,
         filename=file.filename
     )
     db.add(db_user_upload)
