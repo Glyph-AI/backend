@@ -3,6 +3,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm.session import object_session
 
 
 from app.db.base_class import Base
@@ -37,3 +38,36 @@ class Text(Base):
     @name.setter
     def name(self, name_string):
         self._name = name_string
+
+    def refresh_embeddings(self):
+        session = object_session(self)
+        self.embeddings = []
+        session.commit()
+        self.embed()
+
+        return True
+
+    def embed(self, chunk_size=2000, overlap=500):
+        from app.services import OpenaiService
+        from .embedding import Embedding
+        session = object_session(self)
+        openai = OpenaiService()
+        chunks = [self.content[i:i + chunk_size]
+                  for i in range(0, len(self.content), chunk_size-overlap)]
+
+        for chunk in chunks:
+            vector = openai.get_embedding(
+                text=f"{self.name} | {chunk}")
+
+            new_e = Embedding(
+                text_id=self.id,
+                user_id=self.user_id,
+                vector=vector,
+                content=chunk
+            )
+
+            session.add(new_e)
+
+        session.commit()
+
+        return True
