@@ -12,13 +12,10 @@ class UserUpload(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     s3_link = Column(String, nullable=False)
     filename = Column(String)
-    bot_id = Column(Integer, ForeignKey("bots.id"))
     processed = Column(Boolean, default=False)
-    include_in_context = Column(Boolean, default=True)
     deleted = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
 
     user = relationship("User", back_populates="user_uploads")
-    texts = relationship("Text", back_populates="user_upload")
-    bot = relationship("Bot", back_populates="user_uploads")
+    text = relationship("Text", back_populates="user_upload")

@@ -28,7 +28,7 @@ def process_file_upload(upload_file_record: UserUpload):
 @user_uploads_router.post("/bots/{bot_id}/user_upload")
 def upload_file(bot_id: int, file: UploadFile, chat_id: int = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     upload_file_record = user_upload_crud.create_user_upload(
-        bot_id, db, current_user, file)
+        db, current_user, file)
 
     if chat_id:
         upload_message = ChatMessageCreateHidden(

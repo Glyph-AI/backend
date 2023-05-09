@@ -66,9 +66,11 @@ def process_file(user_upload_id, chat_id):
 
     # create a Text object
     new_text = Text(
+        name=filename,
         user_id=user_upload.user_id,
         user_upload_id=user_upload.id,
-        content=decoded
+        content=decoded,
+        text_type="file"
     )
 
     db.add(new_text)
@@ -77,26 +79,7 @@ def process_file(user_upload_id, chat_id):
 
     print(f"User Upload {user_upload_id}: Embedding File")
 
-    chunk_size = 2000
-    overlap = 500
-    chunks = [decoded[i:i + chunk_size]
-              for i in range(0, len(decoded), chunk_size-overlap)]
-
-    # create an embedding for each chunk
-    for chunk in chunks:
-        vector = openai.Embedding.create(
-            input=f"{filename} | {chunk}", model="text-embedding-ada-002")['data'][0]['embedding']
-        new_e = Embedding(
-            bot_id=user_upload.bot_id,
-            text_id=new_text.id,
-            user_id=user_upload.user_id,
-            vector=vector,
-            content=chunk
-        )
-
-        db.add(new_e)
-
-    db.commit()
+    new_text.refresh_embeddings()
 
     print(
         f"User Upload {user_upload_id}: Processing Complete. Generating User Notification")

@@ -5,3 +5,4 @@ from .chat_message import *
 from .user_upload import *
 from .persona import *
 from .tool import *
+from .text import *
