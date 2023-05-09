@@ -162,12 +162,6 @@ class Glyph:
 
     def parse_response(self, response):
         try:
-            response = response.strip("`")
-            if "{{" in response:
-                response = response.replace("{{", "{")
-                response = response.replace("}}", "}")
-
-            response = response.replace("'", '"')
             json_response = json.loads(response)
         except Exception as e:
             print(e)
