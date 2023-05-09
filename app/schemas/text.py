@@ -22,6 +22,7 @@ class TextInfo(BaseModel):
     id: int
     text_type: str
     created_at: datetime
+    content: str
     name: str | None = None
 
     class Config:

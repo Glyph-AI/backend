@@ -18,6 +18,10 @@ def get_texts_by_bot_id(bot_id: int, db: Session, current_user: schemas.User):
     return user_texts(db, current_user).join(BotText).filter(BotText.bot_id == bot_id, BotText.include_in_context == True).all()
 
 
+def get_texts_by_text_type(text_type: str, db: Session, current_user: schemas.User):
+    return user_texts(db, current_user).filter(Text.text_type == text_type).all()
+
+
 def create_text(text_data: schemas.TextCreate, db: Session, current_user: schemas.User):
     new_text = Text(
         user=current_user,
@@ -28,7 +32,7 @@ def create_text(text_data: schemas.TextCreate, db: Session, current_user: schema
 
     db.add(new_text)
     db.commit()
-    db.refresh()
+    db.refresh(new_text)
 
     return new_text
 
@@ -40,6 +44,17 @@ def get_text_by_id(text_id: int, db: Session, current_user: schemas.User):
         raise Errors.credentials_error
 
     return text
+
+
+def embed_text_by_id(text_id: int, db: Session, current_user: schemas.User):
+    text = user_texts(db, current_user).filter(Text.id == text_id).first()
+
+    if text is None:
+        raise Errors.credentials_error
+
+    text.refresh_embeddings()
+
+    return True
 
 
 def update_text_by_id(text_id: int, text_data: schemas.TextCreate, db: Session, current_user: schemas.User):

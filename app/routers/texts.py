@@ -10,9 +10,13 @@ texts_router = APIRouter(tags=["Texts API"], prefix="/texts")
 
 
 @texts_router.get("", response_model=list[TextInfo])
-def get_texts(bot_id: int | None = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_texts(bot_id: int | None = None, text_type: str | None = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if bot_id:
         return text_crud.get_texts_by_bot_id(bot_id, db, current_user)
+
+    if text_type:
+        return text_crud.get_texts_by_text_type(text_type, db, current_user)
+
     return text_crud.get_texts(db, current_user)
 
 
@@ -29,6 +33,11 @@ def get_text_by_id(text_id: int, db: Session = Depends(get_db), current_user: Us
 @texts_router.patch("/{text_id}", response_model=Text)
 def update_text_by_id(text_id: int, text_data: TextCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return text_crud.update_text_by_id(text_id, text_data, db, current_user)
+
+
+@texts_router.post("/{text_id}/embed")
+def embed_text_by_id(text_id: int,  db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return text_crud.embed_text_by_id(text_id, db, current_user)
 
 
 @texts_router.delete("/{text_id}", response_model=list[TextInfo])
