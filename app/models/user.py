@@ -56,7 +56,7 @@ class User(Base):
     @property
     def subscribed(self):
         return len(self.active_subscriptions()) > 0
-    
+
     @property
     def subscription_in_good_standing(self):
         return self.subscribed and self.is_current
@@ -67,7 +67,7 @@ class User(Base):
             return -1
 
         return FREEMIUM_BOTS - len(self.bots)
-    
+
     @property
     def message_count(self):
         from app.services import StripeService
@@ -76,7 +76,7 @@ class User(Base):
 
         if not self.subscription_in_good_standing:
             return sum([len(i.user_messages) for i in self.chats])
-        
+
         active_subscription = self.active_subscriptions()[0]
         active_subscription_id = active_subscription.stripe_subscription_id
         period_start, period_end = StripeService.get_user_current_window(
@@ -86,14 +86,14 @@ class User(Base):
             period_start, period_end) for i in self.chats])
 
         return user_messages_in_period
-    
+
     @property
     def bot_count(self):
         return len(self.bots)
-    
+
     @property
     def file_count(self):
-        return len(self.user_uploads)
+        return len(self.texts)
 
     @property
     def messages_left(self):
@@ -110,7 +110,7 @@ class User(Base):
     @property
     def files_left(self):
         if not self.subscription_in_good_standing:
-            return FREEMIUM_FILES - len(self.user_uploads)
+            return FREEMIUM_FILES - len(self.texts)
 
         return -1
 
@@ -134,7 +134,7 @@ class User(Base):
             active_subscription = self.active_subscriptions()[0]
             if active_subscription.price_tier.name == "Annual":
                 return ANNUAL_SUBSCRIPTION_MESSAGES
-            
+
             return SUBSCRIPTION_MESSAGES
 
         return FREEMIUM_MESSAGES
@@ -150,17 +150,16 @@ class User(Base):
     @property
     def can_create_files(self):
         return self.subscription_in_good_standing or self.files_left > 0
-    
+
     @property
     def subscription_canceled(self):
         if len(self.active_subscriptions()) == 0:
             return False
-    
+
         if self.active_subscriptions()[0].deleted_at:
             return True
-        
+
         return False
 
     def active_subscriptions(self):
         return [s for s in self.subscriptions if s.deleted_at is None or s.deleted_at <= datetime.now()]
-
