@@ -7,7 +7,7 @@ from sqlalchemy import or_
 
 
 def user_texts(db, current_user):
-    return db.query(Text).filter(Text.user_id == current_user.id, Text.deleted != True, or_(Text.text_type == "file", Text.text_type == "note"))
+    return db.query(Text).filter(Text.user_id == current_user.id, or_(Text.deleted == None, Text.deleted == False), or_(Text.text_type == "file", Text.text_type == "note"))
 
 
 def get_texts(db: Session, current_user: schemas.User):
