@@ -26,13 +26,14 @@ followup_prompt = """
 
 FORMAT INSTRUCTIONS:
 
+When responding, please respond in the following format:
+
 ```
 {{
     "action"": $ACTION, -- The action you should take based on your thought. If there are multiple steps required, this should be the first one in order.
-    "action_input": $ACTION_INPUT -- The input to the tool based on your list of actions required to answer the user
+    "action_input": $ACTION_INPUT -- The input to the tool based on the user's input in plain english
 }}
 ```
 
-Based on your list, respond with the first action, action_input sequence required to address the user’s request. ONLY ONE SEQUENCE should be included in the response.
-
+Based on your list, respond with the first action, action_input sequence required to address the user’s request. ONLY ONE SEQUENCE should be included in the response. Response MUST BE IN THE ABOVE FORMAT. Nothing else should be returned
 """
