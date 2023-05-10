@@ -19,6 +19,8 @@ class BotCreate(BaseModel):
     sharing_enabled: bool | None = False
     sharing_code: str | None = None
     persona_id: int
+    enabled_texts: list[TextInfo] | None = []
+    enabled_tools: list[Tool] | None = []
 
     class Config:
         orm_mode = True

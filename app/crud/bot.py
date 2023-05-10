@@ -21,7 +21,9 @@ def create_bot(db: Session, current_user: schemas.User, bot_data: schemas.BotBas
     if not current_user.can_create_bots:
         raise Errors.out_of_bots
 
-    db_bot = Bot(**bot_data.dict())
+    print(bot_data.dict())
+    db_bot = Bot(name=bot_data.name, sharing_enabled=bot_data.sharing_enabled,
+                 persona_id=bot_data.persona_id)
     db.add(db_bot)
     db.commit()
     db_bot_user = BotUser(user_id=current_user.id,
@@ -37,6 +39,18 @@ def create_bot(db: Session, current_user: schemas.User, bot_data: schemas.BotBas
     db.add(db_bot_tool)
     db.add(tg_tool)
     db.commit()
+
+    # mark all incoming tools as enabled
+    for t in bot_data.enabled_tools:
+        bt = BotTool(tool_id=t.id, bot_id=db_bot.id, enabled=True)
+        db.add(bt)
+
+    for t in bot_data.enabled_texts:
+        bt = BotText(text_id=t.id, bot_id=db_bot.id, include_in_context=True)
+        db.add(bt)
+
+    db.commit()
+
     db.refresh(db_bot)
     return db_bot
 
