@@ -15,6 +15,8 @@ class Subscription(Base):
     billed_price = Column(Float, nullable=False)
     stripe_subscription_id = Column(String, nullable=False)
     stripe_subscription_item_id = Column(String, nullable=False)
+    current_window_start_date = Column(DateTime(timezone=True))
+    current_window_end_date = Column(DateTime(timezone=True))
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
     deleted_at = Column(DateTime)

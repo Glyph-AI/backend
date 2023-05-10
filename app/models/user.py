@@ -3,7 +3,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql import func
-from datetime import datetime
+from datetime import datetime, timezone
+from sqlalchemy.orm.session import object_session
 import bcrypt
 
 from app.db.base_class import Base
@@ -78,12 +79,19 @@ class User(Base):
             return sum([len(i.user_messages) for i in self.chats])
 
         active_subscription = self.active_subscriptions()[0]
-        active_subscription_id = active_subscription.stripe_subscription_id
-        period_start, period_end = StripeService.get_user_current_window(
-            active_subscription_id)
+        session = object_session(self)
+
+        if active_subscription.current_window_end_date is None or datetime.now(timezone.utc) > active_subscription.current_window_end_date:
+            print("NO VALUE SET, QUERYING STRIPE")
+            period_start, period_end = StripeService.get_user_current_window(
+                active_subscription.stripe_subscription_id)
+
+            active_subscription.current_window_start_date = period_start
+            active_subscription.current_window_end_date = period_end
+            session.commit()
 
         user_messages_in_period = sum([i.messages_in_period(
-            period_start, period_end) for i in self.chats])
+            active_subscription.current_window_start_date, active_subscription.current_window_end_date) for i in self.chats])
 
         return user_messages_in_period
 
@@ -162,4 +170,7 @@ class User(Base):
         return False
 
     def active_subscriptions(self):
-        return [s for s in self.subscriptions if s.deleted_at is None or s.deleted_at <= datetime.now()]
+        active = [
+            s for s in self.subscriptions if s.deleted_at is None or s.deleted_at <= datetime.now()]
+        active.sort(key=lambda x: x.created_at, reverse=True)
+        return active
