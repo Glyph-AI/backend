@@ -34,6 +34,9 @@ def create_bot(db: Session, current_user: schemas.User, bot_data: schemas.BotBas
     # add respond_to_user tool
     ru_tool = db.query(Tool).filter(Tool.name == "Respond to User").first()
     db_bot_tool = BotTool(tool_id=ru_tool.id, bot_id=db_bot.id, enabled=True)
+    db.add(db_bot_tool)
+    db.commit()
+    # add text generation tool
     tg_tool = db.query(Tool).filter(Tool.name == "Text Generation").first()
     db_bot_tool = BotTool(tool_id=tg_tool.id, bot_id=db_bot.id, enabled=True)
     db.add(db_bot_tool)
