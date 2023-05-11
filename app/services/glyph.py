@@ -28,11 +28,12 @@ class Glyph:
         self.bot = self.db.query(Bot).get(bot_id)
         self.tools = self.bot.enabled_tools
         self.openai = OpenaiService(self.db, self.chat_id)
+        self.user_message = ""
 
     def process_message(self, user_message: str):
         try:
             self.archive()
-            scratchpad = "PREVIOUS ACTIONS:"
+            self.user_message = ""
             prompt = self.format_base_prompt(
                 user_message, [i.format() for i in self.tools])
             initial_obj = self.openai.query_object(prompt)
@@ -72,8 +73,6 @@ class Glyph:
                 prompt = self.format_conversation_prompt(
                     tool_response=glyph_response, action=action_taken, tools=[i.format() for i in self.tools])
 
-                print("--- CONVERSATION PROMPT BEGIN---")
-                print(prompt)
                 obj = self.openai.query_object(prompt)
                 internal_message_array.append(obj)
 
@@ -86,7 +85,7 @@ class Glyph:
                 internal_message_array.append(chatgpt_response_object)
 
         except Exception as e:
-            raise e
+            print(e)
             return "I'm sorry, an internal error occurred, please try again!"
 
         return glyph_response
@@ -161,7 +160,7 @@ class Glyph:
         tool = self.search_for_tool(action)
         tool_class = tool.import_tool()
         tool_obj = tool_class(self.db, self.bot_id,
-                              self.chat_id, internal_message_array=internal_message_array)
+                              self.chat_id, internal_message_array=internal_message_array, original_message=self.user_message)
         response = tool_obj.execute(action_input)
 
         return action, response, tool_class.respond_direct
@@ -174,7 +173,7 @@ class Glyph:
 
             json_response = json.loads(cleaned_response)
         except Exception as e:
-            raise e
+            print(e)
             json_response = {"action": "Respond to User",
                              "action_input": "I'm sorry, an unknown exception as occurred. Please try again!"}
 

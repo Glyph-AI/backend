@@ -1,4 +1,3 @@
-from googlesearch import search
 from .base_tool import BaseTool
 import os
 import requests
@@ -21,10 +20,11 @@ class GoogleSearch(BaseTool):
         formatted_strings = [RESULT_FORMAT.format(
             url=i["url"], title=i["title"], description=i["description"]) for i in results]
         return "\n\n".join(formatted_strings)
-    
+
     def __get_results(self, search_query):
         raw = requests.get(self.__url(search_query)).json()["items"]
-        array_results = [{"url": i['link'], "description": i["snippet"], "title": i['title']} for i in raw][:5]
+        array_results = [
+            {"url": i['link'], "description": i["snippet"], "title": i['title']} for i in raw][:5]
         return array_results
 
     def execute(self, message):
