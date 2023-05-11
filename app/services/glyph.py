@@ -47,6 +47,7 @@ class Glyph:
             followup = self.openai.query_object(followup_prompt)
             internal_message_array.append(followup)
             chatgpt_response = self.openai.query_model(internal_message_array)
+            internal_message_array.append(chatgpt_response)
 
             iter = 0
             while True:
