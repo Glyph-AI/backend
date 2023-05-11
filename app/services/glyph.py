@@ -47,7 +47,8 @@ class Glyph:
             followup = self.openai.query_object(followup_prompt)
             internal_message_array.append(followup)
             chatgpt_response = self.openai.query_model(internal_message_array)
-            chatgpt_response_obj = self.openai.query_object(chatgpt_response, role="assistant")
+            chatgpt_response_obj = self.openai.query_object(
+                chatgpt_response, role="assistant")
             internal_message_array.append(chatgpt_response_obj)
 
             iter = 0
@@ -69,7 +70,10 @@ class Glyph:
                     return "Max Internal Iterations Reached"
 
                 prompt = self.format_conversation_prompt(
-                    tool_response=glyph_response)
+                    tool_response=glyph_response, action=action_taken, tools=[i.format() for i in self.tools])
+
+                print("--- CONVERSATION PROMPT BEGIN---")
+                print(prompt)
                 obj = self.openai.query_object(prompt)
                 internal_message_array.append(obj)
 
@@ -82,7 +86,7 @@ class Glyph:
                 internal_message_array.append(chatgpt_response_object)
 
         except Exception as e:
-            print(e)
+            raise e
             return "I'm sorry, an internal error occurred, please try again!"
 
         return glyph_response
@@ -164,9 +168,13 @@ class Glyph:
 
     def parse_response(self, response):
         try:
-            json_response = json.loads(response)
+            cleaned_response = response
+            if "`" in response:
+                cleaned_response = response.strip("`")
+
+            json_response = json.loads(cleaned_response)
         except Exception as e:
-            print(e)
+            raise e
             json_response = {"action": "Respond to User",
                              "action_input": "I'm sorry, an unknown exception as occurred. Please try again!"}
 
@@ -226,13 +234,15 @@ class Glyph:
 
         return prompt
 
-    def format_conversation_prompt(self, tool_response: str):
+    def format_conversation_prompt(self, tool_response: str, action: str, tools: list[dict]):
         chat_history = self.get_last_n_messages(
             self.message_history_to_include)
 
         prompt = conversation_prompt.format(
             persona_prompt=self.bot.persona.prompt,
             tool_response=tool_response,
+            action=action,
+            tools=tools,
             current_date=datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
         )
 

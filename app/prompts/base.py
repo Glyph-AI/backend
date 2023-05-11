@@ -5,19 +5,27 @@ CURRENT_DATE: {current_date}
 
 {persona_prompt}
 
-TOOLS: {tools}
-
-Given the below instructions, identify the component problems involved in solving the user’s request. 
-
-Identify sub-problems that are dependent on other sub-problems and note the sub-problems each is dependent on. List them in order such that no problem is being solved before the problem's it depends on are solved.
-
-You cannot ask the user for additional information, so do your best to solve the problem with this list
-
-RESPONSE INSTRUCTIONS: Response must be a list of tool names from your list of tools, in the order they must be used in order to resolve the user request. Respond to User should never appear before the final item in the list.
-
 CHAT HISTORY:
 
 {chat_history}
+
+TOOLS: {tools}
+
+Given the below instructions, identify the component problems involved in solving the user’s request taking into account the CHAT HISTORY
+
+Identify sub-problems that are dependent on other sub-problems and note the sub-problems each is dependent on. List them in order such that no problem is being solved before the problem's it depends on are solved.
+
+You cannot ask the user for additional information, so do your best to solve the problem with this list. 
+
+RESPONSE INSTRUCTIONS: Respond with a list in the following format
+---
+
+$TOOL_NAME - $DESCRIPTION
+
+---
+
+$TOOL_NAME must be a tool from your list of tools
+$DESCRIPTION is a short description of what you will do with that tool. 
 
 USER REQUEST: {user_input}
 """
