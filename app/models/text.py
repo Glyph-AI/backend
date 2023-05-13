@@ -39,6 +39,13 @@ class Text(Base):
     def name(self, name_string):
         self._name = name_string
 
+    @property
+    def processed(self):
+        if self.user_upload:
+            return self.user_upload.processed
+
+        return True
+
     def refresh_embeddings(self):
         session = object_session(self)
         self.embeddings = []

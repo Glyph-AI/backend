@@ -24,6 +24,7 @@ class TextInfo(BaseModel):
     created_at: datetime
     content: str
     name: str | None = None
+    processed: bool | None = None
 
     class Config:
         orm_mode = True
