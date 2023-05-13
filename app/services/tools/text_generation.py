@@ -10,7 +10,7 @@ class TextGeneration(BaseTool):
         openai = OpenaiService(self.db, self.chat_id)
         messages = self.internal_message_array
 
-        prompt = text_generation_prompt.format(prompt=message)
+        prompt = text_generation_prompt.format(prompt=self.original_message)
 
         message_obj = openai.query_object(prompt)
         messages.append(message_obj)
