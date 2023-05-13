@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, get_current_user
-from app.schemas import Text, TextInfo, User, TextCreate
+from app.schemas import Text, TextInfo, User, TextCreate, TextSuggestion, TextSuggestionRequest
 from app.crud import text as text_crud
 from app.errors import Errors
 
@@ -48,3 +48,8 @@ def delete_text(text_id: int, db: Session = Depends(get_db), current_user: User 
 @texts_router.patch("/{text_id}/{bot_id}/status", response_model=list[TextInfo])
 def update_text_status_for_bot(text_id: int, bot_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return text_crud.update_text_status(text_id, bot_id, db, current_user)
+
+
+@texts_router.get("/{text_id}/suggestion", response_model=TextSuggestion)
+def get_suggestion_for_text(text_id: int, text: TextSuggestionRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return text_crud.get_suggestion(text, text, db, current_user)

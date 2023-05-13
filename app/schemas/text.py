@@ -35,6 +35,14 @@ class TextCreate(TextBase):
         orm_mode = True
 
 
+class TextSuggestion(BaseModel):
+    suggestion: str
+
+
+class TextSuggestionRequest(BaseModel):
+    new_text: str
+
+
 class BotTextStatusUpdate(BaseModel):
     bot_id: int
     text_id: int

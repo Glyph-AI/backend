@@ -12,15 +12,27 @@ TEMPERATURE = 0.0
 
 
 class OpenaiService:
-    def __init__(self, db: Session | None = None, chat_id: int | None = None):
+    def __init__(self, db: Session | None = None, chat_id: int | None = None, text_id: int | None = None):
         self.chat_id = chat_id
         self.db = db
 
     def __chatgpt_log(self, message_to_log: str):
-        log = ChatgptLog(
-            chat_id=self.chat_id,
-            message=message_to_log
-        )
+        log = None
+        if self.chat_id:
+            log = ChatgptLog(
+                chat_id=self.chat_id,
+                message=message_to_log
+            )
+        elif self.text_id:
+            log = ChatgptLog(
+                text_id=self.text_id,
+                message=message_to_log
+            )
+
+        else:
+            log = ChatgptLog(
+                message=message_to_log
+            )
 
         self.db.add(log)
         self.db.commit()

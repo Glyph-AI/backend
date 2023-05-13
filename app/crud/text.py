@@ -2,6 +2,8 @@ from sqlalchemy.orm import Session
 from app.models import Text, BotText
 import app.schemas as schemas
 from app.errors import Errors
+from app.services import OpenaiService
+from app.prompts import text_suggestion
 from datetime import datetime
 from sqlalchemy import or_
 
@@ -85,3 +87,11 @@ def delete_text_by_id(text_id: int, db: Session, current_user: schemas.User):
     db.commit()
 
     return get_texts(db, current_user)
+
+
+def get_suggestion(text_id: int, text: str, db: Session, current_user: schemas.User):
+    openai = OpenaiService(db=db, text_id=text_id)
+    prompt = text_suggestion.format(input=text.new_text)
+    prompt_object = openai.query_object(prompt)
+    response = openai.query_model([prompt_object])
+    return {"suggestion": response}

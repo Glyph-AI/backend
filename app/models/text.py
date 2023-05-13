@@ -28,6 +28,7 @@ class Text(Base):
     bots = association_proxy("bot_texts", "bots")
     embeddings = relationship("Embedding", back_populates="text")
     user_upload = relationship("UserUpload", back_populates="text")
+    chatgpt_logs = relationship("ChatgptLog", back_populates="text")
 
     @hybrid_property
     def name(self):
