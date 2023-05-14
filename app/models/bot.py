@@ -13,6 +13,7 @@ class Bot(Base):
     sharing_enabled = Column(Boolean, default=False)
     sharing_code = Column(String, unique=True)
     persona_id = Column(Integer, ForeignKey("personas.id"))
+    avatar_location = Column(String)
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
 

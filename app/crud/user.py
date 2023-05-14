@@ -62,13 +62,14 @@ def upload_profile_picture(file: UploadFile, db: Session, current_user: schemas.
     bucket = os.getenv("PUBLIC_BUCKET", "public")
     store = os.getenv("STORE_URL")
     if os.getenv("ENVIRONMENT") == "development":
-        store = "localhost:9000"
+        store = "http://localhost:9000"
     s3 = S3Service(bucket)
-    s3.upload_file(tmp_dir, file.filename)
+    s3_path = f"/{current_user.id}/{file.filename}"
+    s3.upload_file(tmp_dir, s3_path)
 
     user = get_user_by_id(db, current_user, current_user.id)
 
-    user.profile_picture_location = f"{store}/{bucket}/{file.filename}"
+    user.profile_picture_location = f"{store}/{bucket}/{user.id}/{file.filename}"
     db.commit()
     db.refresh(user)
 
