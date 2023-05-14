@@ -61,7 +61,7 @@ async def update_user(update_data: UserUpdate, db: Session = Depends(get_db), cu
     return user_crud.update_user(update_data, db, current_user)
 
 
-@users_router.post("/profile/picture")
+@users_router.post("/profile/picture", response_model=User)
 async def upload_profile_picture(file: UploadFile, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     file_extension = get_file_extension(file.filename)
     if file_extension not in ["jpg", "jpeg", "png"]:
