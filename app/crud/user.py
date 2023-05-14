@@ -24,25 +24,29 @@ def create_user(db: Session, user_create_data: Union[schemas.UserCreateSSO, sche
     db.refresh(db_user)
     return db_user
 
+
 def update_user(user_update_data: schemas.UserUpdate, db: Session, current_user: schemas.User):
     if user_update_data.id != current_user.id:
         raise Errors.credentials_error
-    
-    for key, value in user_update_data.dict(exclude_none = True).items()
+
+    user = get_user_by_id(db, current_user, user_update_data.id)
+
+    for key, value in user_update_data.dict(exclude_none=True).items():
         if key == "id":
             continue
 
-        setattr(current_user, key, value)
+        setattr(user, key, value)
 
     db.commit()
-    db.refresh(current_user)
+    db.refresh(user)
 
-    return current_user
+    return user
+
 
 def upload_profile_picture(file: UploadFile, db: Session, current_user: schemas.User):
     fileObject = file.file
     tmp_dir = f"/tmp/{file.filename}"
-    
+
     try:
         os.makedirs("/tmp")
     except OSError as e:
@@ -50,7 +54,7 @@ def upload_profile_picture(file: UploadFile, db: Session, current_user: schemas.
             pass
         else:
             raise e
-        
+
     with open(tmp_dir, "wb+") as f:
         f.write(fileObject.read())
 
@@ -64,4 +68,3 @@ def upload_profile_picture(file: UploadFile, db: Session, current_user: schemas.
     db.commit()
 
     return current_user
-        

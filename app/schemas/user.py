@@ -63,10 +63,6 @@ class UserCreateSSO(UserBase):
         orm_mode = True
 
 
-class UserUpdate(BaseModel):
-    id: int
-
-
 class Token(BaseModel):
     access_token: str
     token_type: str
