@@ -180,7 +180,7 @@ def upload_avatar(bot_id: int, file: UploadFile, db: Session, current_user: sche
     if os.getenv("ENVIRONMENT") == "development":
         store = "http://localhost:9000"
     s3 = S3Service(bucket)
-    s3_path = f"/{current_user.id}/{file.filename}"
+    s3_path = f"{current_user.id}/{file.filename}"
     s3.upload_file(tmp_dir, s3_path)
 
     bot = get_bot_by_id(bot_id, db, current_user)

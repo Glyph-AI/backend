@@ -64,7 +64,7 @@ def upload_profile_picture(file: UploadFile, db: Session, current_user: schemas.
     if os.getenv("ENVIRONMENT") == "development":
         store = "http://localhost:9000"
     s3 = S3Service(bucket)
-    s3_path = f"/{current_user.id}/{file.filename}"
+    s3_path = f"{current_user.id}/{file.filename}"
     s3.upload_file(tmp_dir, s3_path)
 
     user = get_user_by_id(db, current_user, current_user.id)
