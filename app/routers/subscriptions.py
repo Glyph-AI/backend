@@ -14,6 +14,8 @@ subscriptions_router = APIRouter(tags=["Subscriptions API"])
 class BillCycle(str, Enum):
     MONTHLY = "Monthly"
     ANNUAL = "Annual"
+    LITE_YEARLY = "Lite_Yearly"
+    LITE_MONTHLY = "Lite_Monthly"
 
 
 @subscriptions_router.get("/subscriptions/checkout-session")
