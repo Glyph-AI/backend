@@ -1,17 +1,20 @@
 from pydantic import BaseModel
 from datetime import datetime
-from .chat import Chat
 from .user import User
-from .user_upload import UserUpload
 from .persona import Persona
 from .tool import Tool
 from .text import TextInfo
+from typing import List
 
 
 class BotBase(BaseModel):
     name: str
     sharing_enabled: bool | None = False
     sharing_code: str | None = None
+    avatar_location: str | None = None
+
+    class Config:
+        orm_mode = True
 
 
 class BotCreate(BaseModel):
@@ -30,7 +33,7 @@ class Bot(BotBase):
     id: int
     created_at: datetime
     users: list[User]
-    chats: list[Chat]
+    chats: "List[Chat]"
     enabled_tools: list[Tool]
     enabled_texts: list[TextInfo]
     persona: Persona
@@ -50,3 +53,7 @@ class BotUpdate(BaseModel):
 
 class BotSharingAdd(BaseModel):
     sharing_code: str
+
+
+from .chat import Chat  # noqa
+Bot.update_forward_refs()

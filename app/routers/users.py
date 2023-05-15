@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from google.oauth2 import id_token
@@ -7,7 +7,7 @@ import os
 from datetime import datetime, timedelta, timezone
 
 from app.dependencies import get_db, get_current_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
-from app.schemas import UserCreateSSO, User, GoogleAuth, UserCreate, UserLogin
+from app.schemas import UserCreateSSO, User, GoogleAuth, UserCreate, UserLogin, UserUpdate
 import app.crud.user as user_crud
 from app.errors import Errors
 from app.services import StripeService
@@ -16,6 +16,10 @@ import app.models as models
 COOKIE_DOMAIN = os.environ.get("COOKIE_DOMAIN", "localhost")
 
 users_router = APIRouter(tags=["User API"])
+
+
+def get_file_extension(filename):
+    return filename.rsplit('.', 1)[1].lower()
 
 
 def set_cookies(user):
@@ -50,6 +54,20 @@ async def get_user(id: int, db: Session = Depends(get_db), current_user: User = 
         raise Errors.not_authorized_error
 
     return current_user
+
+
+@users_router.patch("/profile", response_model=User)
+async def update_user(update_data: UserUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return user_crud.update_user(update_data, db, current_user)
+
+
+@users_router.post("/profile/picture", response_model=User)
+async def upload_profile_picture(file: UploadFile, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    file_extension = get_file_extension(file.filename)
+    if file_extension not in ["jpg", "jpeg", "png"]:
+        raise Errors.invalid_file_type
+
+    return user_crud.upload_profile_picture(file, db, current_user)
 
 
 @users_router.post("/users", response_model=User)

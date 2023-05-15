@@ -1,10 +1,12 @@
-from fastapi import Depends
+from fastapi import UploadFile
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from app.models import Bot, BotUser, Tool, BotTool, BotText
 import app.schemas as schemas
+from app.services import S3Service
 from app.errors import Errors
-
+import errno
+import os
 import random
 import string
 
@@ -154,4 +156,37 @@ def change_text_status(bot_id: int, text_id: int, db: Session, current_user: sch
         db.commit()
 
     db.refresh(bot)
+    return bot
+
+
+def upload_avatar(bot_id: int, file: UploadFile, db: Session, current_user: schemas.User):
+    fileObject = file.file
+    tmp_dir = f"/tmp/{file.filename}"
+
+    try:
+        os.makedirs("/tmp")
+    except OSError as e:
+        if e.errno == errno.EEXIST and os.path.isdir("/tmp"):
+            pass
+        else:
+            raise e
+
+    with open(tmp_dir, "wb+") as f:
+        f.write(fileObject.read())
+
+    # upload to storage
+    bucket = os.getenv("PUBLIC_BUCKET", "public")
+    store = os.getenv("STORE_URL")
+    if os.getenv("ENVIRONMENT") == "development":
+        store = "http://localhost:9000"
+    s3 = S3Service(bucket)
+    s3_path = f"{current_user.id}/{file.filename}"
+    s3.upload_file(tmp_dir, s3_path)
+
+    bot = get_bot_by_id(bot_id, db, current_user)
+
+    bot.avatar_location = f"{store}/{bucket}/{current_user.id}/{file.filename}"
+    db.commit()
+    db.refresh(bot)
+
     return bot

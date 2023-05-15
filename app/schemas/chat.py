@@ -1,3 +1,4 @@
+from .bot import BotBase
 from pydantic import BaseModel
 from typing import Any
 from pydantic.utils import GetterDict
@@ -8,6 +9,7 @@ from .chat_message import ChatMessage
 class ChatBase(BaseModel):
     name: str
     bot_id: int
+    bot: "BotBase"
 
 
 class Chat(ChatBase):
@@ -19,3 +21,8 @@ class Chat(ChatBase):
 
     class Config:
         orm_mode = True
+
+
+from .bot import BotBase  # noqa
+ChatBase.update_forward_refs()
+Chat.update_forward_refs()

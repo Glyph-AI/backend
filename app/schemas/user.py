@@ -3,17 +3,31 @@ from typing import List
 from typing import Optional
 from datetime import datetime
 
+
 class GoogleAuth(BaseModel):
     token: str
+
 
 class UserLogin(BaseModel):
     email: str
     password: str
 
+
 class UserBase(BaseModel):
     email: str
     first_name: str
     last_name: str
+
+
+class UserUpdate(BaseModel):
+    id: int
+    first_name: str | None = None
+    last_name: str | None = None
+    password: str | None = None
+
+    class Config:
+        orm_mode = True
+
 
 class UserCreate(UserBase):
     password: str
@@ -47,10 +61,6 @@ class UserCreateSSO(UserBase):
 
     class Config:
         orm_mode = True
-
-
-class UserUpdate(BaseModel):
-    id: int
 
 
 class Token(BaseModel):
