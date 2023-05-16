@@ -9,11 +9,23 @@ import bcrypt
 
 from app.db.base_class import Base
 
+# SUBSCRIPTION_CONSTANTS
+FREEMIUM = "FREEMIUM"
+LITE_MONTHLY = "Lite_Monthly"
+LITE_YEARLY = "Lite_Yearly"
+GOLD_MONTHLY = "Monthly"
+GOLD_ANNUAL = "Annual"
+
 FREEMIUM_BOTS = 2
 FREEMIUM_MESSAGES = 50
 FREEMIUM_FILES = 2
 SUBSCRIPTION_MESSAGES = 750
 ANNUAL_SUBSCRIPTION_MESSAGES = SUBSCRIPTION_MESSAGES * 12
+
+LITE_BOTS = 2
+LITE_MESSAGES = 50
+LITE_YEARLY_MESSAGES = LITE_MESSAGES * 12
+LITE_FILES = 2
 
 
 class User(Base):
@@ -63,13 +75,6 @@ class User(Base):
         return self.subscribed and self.is_current
 
     @property
-    def bots_left(self):
-        if self.subscription_in_good_standing:
-            return -1
-
-        return FREEMIUM_BOTS - len(self.bots)
-
-    @property
     def message_count(self):
         from app.services import StripeService
         if len(self.chats) == 0:
@@ -103,17 +108,27 @@ class User(Base):
     def file_count(self):
         return len(self.texts)
 
+    ### Subscription Limiting Functions BEGIN
+
     @property
     def messages_left(self):
         message_count = self.message_count
         if self.subscription_in_good_standing:
             active_subscription = self.active_subscriptions()[0]
-            if active_subscription.price_tier.name == "Annual":
+            tier = self.subscription_tier
+
+            if tier == LITE_MONTHLY:
+                return LITE_MESSAGES - message_count
+            elif tier == LITE_YEARLY:
+                return LITE_YEARLY_MESSAGES - message_count
+            elif tier == GOLD_ANNUAL:
                 return ANNUAL_SUBSCRIPTION_MESSAGES - message_count
+            elif tier == GOLD_MONTHLY:
+                return SUBSCRIPTION_MESSAGES - message_count
+            else:
+                return FREEMIUM_MESSAGES - message_count
 
-            return SUBSCRIPTION_MESSAGES - message_count
-
-        return FREEMIUM_MESSAGES - self.message_count
+        return FREEMIUM_MESSAGES - message_count
 
     @property
     def files_left(self):
@@ -121,6 +136,15 @@ class User(Base):
             return FREEMIUM_FILES - len(self.texts)
 
         return -1
+
+    @property
+    def bots_left(self):
+        if self.subscription_in_good_standing:
+            if self.subscription_tier == "LITE"
+
+        return FREEMIUM_BOTS - len(self.bots)
+    
+    ### Subscription Limiting Functions END
 
     @property
     def allowed_files(self):
@@ -168,6 +192,16 @@ class User(Base):
             return True
 
         return False
+
+    @property
+    def subscription_tier(self):
+        actives = self.active_subscriptions()
+        if len(actives) == 0:
+            return FREEMIUM
+
+        sub = actives[0]
+
+        return sub.name
 
     def active_subscriptions(self):
         active = [
