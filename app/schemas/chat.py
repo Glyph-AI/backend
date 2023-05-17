@@ -11,6 +11,13 @@ class ChatBase(BaseModel):
     bot_id: int
     bot: "BotBase"
 
+class ChatCreate(BaseModel):
+    name: str
+    bot_id: int
+
+    class Config: 
+        orm_mode = True
+
 
 class Chat(ChatBase):
     id: int
