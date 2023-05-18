@@ -157,7 +157,7 @@ class User(Base):
         if len(actives) == 0:
             return "FREE", "monthly"
         
-        if self.subscription_in_good_standing:
+        if not self.subscription_in_good_standing:
             return "FREE", "monthly"
 
         sub = actives[0]
