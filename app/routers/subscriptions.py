@@ -7,15 +7,18 @@ from enum import Enum
 from app.dependencies import get_db, get_current_user
 from app.schemas import User
 from app.services import StripeService
+from app.subscription_tiers import tiers
 
 subscriptions_router = APIRouter(tags=["Subscriptions API"])
 
 
 class BillCycle(str, Enum):
-    MONTHLY = "Monthly"
-    ANNUAL = "Annual"
-    LITE_YEARLY = "Lite_Yearly"
-    LITE_MONTHLY = "Lite_Monthly"
+    SILVER_MONTHLY = "SILVER_monthly"
+    SILVER_ANNUALLY = "SILVER_annually"
+    GOLD_MONTHLY = "GOLD_monthly"
+    GOLD_ANNUALLY = "GOLD_annually"
+    PLATINUM_MONTHLY = "PLATINUM_monthly"
+    PLATINUM_ANNUALLY = "PLATINUM_annually"
 
 
 @subscriptions_router.get("/subscriptions/checkout-session")
@@ -45,3 +48,7 @@ async def webhook_receive(request: Request, stripe_signature: str = Header(None)
     stripe_svc.handle_webhook(stripe_data, stripe_signature)
 
     return JSONResponse(content={"status": "success"})
+
+@subscriptions_router.get("/tiers")
+async def get_tiers(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return tiers

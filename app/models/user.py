@@ -5,27 +5,10 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql import func
 from datetime import datetime, timezone
 from sqlalchemy.orm.session import object_session
+from app.subscription_tiers import tiers
 import bcrypt
 
 from app.db.base_class import Base
-
-# SUBSCRIPTION_CONSTANTS
-FREEMIUM = "FREEMIUM"
-LITE_MONTHLY = "Lite_Monthly"
-LITE_YEARLY = "Lite_Yearly"
-GOLD_MONTHLY = "Monthly"
-GOLD_ANNUAL = "Annual"
-
-FREEMIUM_BOTS = 2
-FREEMIUM_MESSAGES = 50
-FREEMIUM_FILES = 2
-SUBSCRIPTION_MESSAGES = 750
-ANNUAL_SUBSCRIPTION_MESSAGES = SUBSCRIPTION_MESSAGES * 12
-
-LITE_BOTS = 2
-LITE_MESSAGES = 50
-LITE_YEARLY_MESSAGES = LITE_MESSAGES * 12
-LITE_FILES = 2
 
 
 class User(Base):
@@ -112,64 +95,39 @@ class User(Base):
 
     @property
     def messages_left(self):
-        message_count = self.message_count
-        if self.subscription_in_good_standing:
-            active_subscription = self.active_subscriptions()[0]
-            tier = self.subscription_tier
-
-            if tier == LITE_MONTHLY:
-                return LITE_MESSAGES - message_count
-            elif tier == LITE_YEARLY:
-                return LITE_YEARLY_MESSAGES - message_count
-            elif tier == GOLD_ANNUAL:
-                return ANNUAL_SUBSCRIPTION_MESSAGES - message_count
-            elif tier == GOLD_MONTHLY:
-                return SUBSCRIPTION_MESSAGES - message_count
-            else:
-                return FREEMIUM_MESSAGES - message_count
-
-        return FREEMIUM_MESSAGES - message_count
+        return self.allowed_messages - self.message_count
 
     @property
     def files_left(self):
-        if not self.subscription_in_good_standing:
-            return FREEMIUM_FILES - len(self.texts)
-
-        return -1
+        return self.allowed_files - self.file_count
 
     @property
     def bots_left(self):
-        if self.subscription_in_good_standing:
-            if self.subscription_tier == "LITE"
-
-        return FREEMIUM_BOTS - len(self.bots)
+        return self.allowed_bots - self.bot_count
     
     ### Subscription Limiting Functions END
 
     @property
     def allowed_files(self):
-        if self.subscription_in_good_standing:
-            return -1
+        tier, recurring = self.subscription_tier
+        if recurring == "annually":
+            return tiers[tier]["files"] * 12
+        return tiers[tier]["files"]
 
-        return FREEMIUM_FILES
 
     @property
     def allowed_bots(self):
-        if self.subscription_in_good_standing:
-            return -1
-
-        return FREEMIUM_BOTS
+        tier, recurring = self.subscription_tier
+        if recurring == "annually":
+            return tiers[tier]["bots"] * 12
+        return tiers[tier]["bots"]
 
     @property
     def allowed_messages(self):
-        if self.subscription_in_good_standing:
-            active_subscription = self.active_subscriptions()[0]
-            if active_subscription.price_tier.name == "Annual":
-                return ANNUAL_SUBSCRIPTION_MESSAGES
-
-            return SUBSCRIPTION_MESSAGES
-
-        return FREEMIUM_MESSAGES
+        tier, recurring = self.subscription_tier
+        if recurring == "annually":
+            return tiers[tier]["messages"] * 12
+        return tiers[tier]["messages"]
 
     @property
     def can_create_messages(self):
@@ -197,11 +155,16 @@ class User(Base):
     def subscription_tier(self):
         actives = self.active_subscriptions()
         if len(actives) == 0:
-            return FREEMIUM
+            return "FREE", "monthly"
+        
+        if self.subscription_in_good_standing:
+            return "FREE", "monthly"
 
         sub = actives[0]
 
-        return sub.name
+        name, recurring = sub.name.split("_")
+
+        return name, recurring
 
     def active_subscriptions(self):
         active = [

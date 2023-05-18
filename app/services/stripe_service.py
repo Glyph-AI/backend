@@ -34,6 +34,7 @@ class StripeService():
 
         price_id = self.db.query(PriceTier).filter(
             PriceTier.name == price_name).first().id
+
         session = stripe.checkout.Session.create(
             success_url=f"{redirect_url}?success=true",
             cancel_url=redirect_url,
