@@ -162,7 +162,7 @@ class User(Base):
 
         sub = actives[0]
 
-        name, recurring = sub.name.split("_")
+        name, recurring = sub.price_tier.name.split("_")
 
         return name, recurring
 
