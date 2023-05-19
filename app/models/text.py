@@ -26,8 +26,15 @@ class Text(Base):
 
     user = relationship("User", back_populates="texts")
     bots = association_proxy("bot_texts", "bots")
-    embeddings = relationship("Embedding", back_populates="text")
     user_upload = relationship("UserUpload", back_populates="text")
+    embeddings = relationship("Embedding", back_populates="text")
+
+    @property
+    def extension(self):
+        if self.name is not None:
+            return "txt"
+        
+        return self.user_upload.filename.rsplit('.', 1)[1].lower()
 
     @hybrid_property
     def name(self):
@@ -45,6 +52,10 @@ class Text(Base):
             return self.user_upload.processed
 
         return True
+    
+    def chunk_content(self, chunk_size=2000, overlap=500):
+        return [self.content[i:i + chunk_size]
+                  for i in range(0, len(self.content), chunk_size-overlap)]
 
     def refresh_embeddings(self):
         session = object_session(self)
@@ -55,15 +66,14 @@ class Text(Base):
         return True
 
     def embed(self, chunk_size=2000, overlap=500):
-        from app.services import OpenaiService
+        from app.services import SentenceTransformerService
         from .embedding import Embedding
         session = object_session(self)
-        openai = OpenaiService()
-        chunks = [self.content[i:i + chunk_size]
-                  for i in range(0, len(self.content), chunk_size-overlap)]
+        embed_service = SentenceTransformerService()
+        chunks = self.chunk_content(chunk_size, overlap)
 
         for chunk in chunks:
-            vector = openai.get_embedding(
+            vector = embed_service.get_embedding(
                 text=f"{self.name} | {chunk}")
 
             new_e = Embedding(
