@@ -7,6 +7,7 @@ RUN apt-get install poppler-utils tesseract-ocr ffmpeg libsm6 libxext6 libtesser
 
 # Bring in embedding model
 RUN pip install sentence_transformers
+ENV TRANSFORMERS_CACHE="/sentence_transformer_model"
 RUN python -c 'from sentence_transformers import SentenceTransformer; SentenceTransformer("all-mpnet-base-v2")'
 
 # set workdir
