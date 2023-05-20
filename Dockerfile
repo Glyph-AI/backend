@@ -13,7 +13,7 @@ RUN python -c 'from sentence_transformers import SentenceTransformer; SentenceTr
 WORKDIR /app
 
 # install dependencies
-COPY ./requirements.txt ./requirements.txt
+COPY ./app/requirements.txt ./app/requirements.txt
 RUN pip install -r app/requirements.txt
 
 # copy source code
