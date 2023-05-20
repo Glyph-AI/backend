@@ -1,6 +1,6 @@
 from sentence_transformers import SentenceTransformer
 
-model = SentenceTransformer("all-mpnet-base-v2")
+model = SentenceTransformer("/embedding_model")
 
 class SentenceTransformerService():
     def __init__(self):
