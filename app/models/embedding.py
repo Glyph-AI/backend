@@ -13,7 +13,7 @@ class Embedding(Base):
     bot_id = Column(Integer, ForeignKey("bots.id"))
     text_id = Column(Integer, ForeignKey("texts.id"), nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    vector = Column(Vector(768), nullable=False)
+    vector = Column(Vector(768))
     content = Column(String(4000), nullable=False)
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
