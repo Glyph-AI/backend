@@ -30,4 +30,3 @@ googlesearch-python
 pytest
 requests
 pytest-mock
-sentence-transformers
