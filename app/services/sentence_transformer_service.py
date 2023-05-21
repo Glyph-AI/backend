@@ -12,4 +12,5 @@ class SentenceTransformerService():
             "text": text
         }
         resp = requests.post(f"http://{self.url}/embed", json=data)
+        print(resp.json()["vector"])
         return resp.json()["vector"]
