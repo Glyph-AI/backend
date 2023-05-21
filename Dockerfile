@@ -4,11 +4,6 @@ FROM python:3.10
 RUN apt-get update
 RUN apt-get -y install postgresql-client
 RUN apt-get install poppler-utils tesseract-ocr ffmpeg libsm6 libxext6 libtesseract-dev libtesseract-dev pkg-config -y
-
-# Bring in embedding model
-RUN pip install sentence-transformers
-RUN python -c 'from sentence_transformers import SentenceTransformer; model = SentenceTransformer("all-mpnet-base-v2"); model.save("/embedding_model")'
-
 # set workdir
 WORKDIR /app
 
