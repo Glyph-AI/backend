@@ -3,7 +3,7 @@ import requests
 
 class SentenceTransformerService():
     def __init__(self):
-        self.url = os.getenv("EMBEDDING_SERVICE", "embedding-service:8001")
+        self.url = os.getenv("EMBEDDING_SERVICE", "http://embedding-service:8001")
         pass
 
     def get_embedding(self, text: str):
@@ -11,6 +11,6 @@ class SentenceTransformerService():
         data = {
             "text": text
         }
-        resp = requests.post(f"http://{self.url}/embed", json=data)
+        resp = requests.post(f"{self.url}/embed", json=data)
         print(resp.json()["vector"])
         return resp.json()["vector"]
