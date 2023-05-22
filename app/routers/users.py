@@ -7,7 +7,7 @@ import os
 from datetime import datetime, timedelta, timezone
 
 from app.dependencies import get_db, get_current_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
-from app.schemas import UserCreateSSO, User, GoogleAuth, UserCreate, UserLogin, UserUpdate
+from app.schemas import UserCreateSSO, User, GoogleAuth, UserCreate, UserLogin, UserUpdate, UserToken, TokenCreate
 import app.crud.user as user_crud
 from app.errors import Errors
 from app.services import StripeService
@@ -166,3 +166,16 @@ async def auth_google(google_token: GoogleAuth, db: Session = Depends(get_db)):
     except ValueError as e:
         print(e)
         raise Errors.credentials_error
+    
+@users_router.post("/token", response_model=UserToken)
+async def generate_access_token(token_data: TokenCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    access_token = create_access_token(data={"sub": current_user.email}, expiration_delta=10000000)
+    ut = models.UserToken(user_id=current_user.id, access_token=access_token, name=token_data.name)
+    db.add(ut)
+    db.commit()
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@users_router.get("/token", response_model=list[UserToken])
+async def get_access_tokens(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    print(current_user.tokens)
+    return current_user.tokens

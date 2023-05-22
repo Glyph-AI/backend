@@ -102,9 +102,9 @@ async def current_user_is_admin(current_user: User = Depends(get_current_user)):
     return current_user
 
 
-def create_access_token(data: dict):
+def create_access_token(data: dict, expiration_delta = ACCESS_TOKEN_EXPIRE_MINUTES):
     to_encode = data.copy()
-    expires_delta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expires_delta = timedelta(minutes=expiration_delta)
 
     expire = datetime.utcnow() + expires_delta
     to_encode.update({"exp": expire})

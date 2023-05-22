@@ -67,6 +67,17 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+class UserToken(BaseModel):
+    name: str
+    access_token: str
+    token_type: str
+    created_at: datetime
+
+    class Config:
+        orm_mode=True
 
 class TokenData(BaseModel):
     email: str | None = None
+
+class TokenCreate(BaseModel):
+    name: str
