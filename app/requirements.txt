@@ -123,6 +123,7 @@ pydantic==1.10.7
 Pygments==2.15.0
 pymilvus==2.2.5
 pyparsing==3.0.9
+PyPDF2==3.0.1
 pyrsistent==0.19.3
 pytesseract==0.3.10
 python-dateutil==2.8.2
@@ -168,6 +169,7 @@ urllib3==1.26.15
 uvicorn==0.21.1
 uvloop==0.17.0
 vine==5.0.0
+watchdog==3.0.0
 watchfiles==0.19.0
 wcwidth==0.2.6
 webcolors==1.13
