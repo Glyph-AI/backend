@@ -33,7 +33,7 @@ class Text(Base):
     def extension(self):
         if self.name is not None:
             return "txt"
-        
+
         return self.user_upload.filename.rsplit('.', 1)[1].lower()
 
     @hybrid_property
@@ -52,10 +52,10 @@ class Text(Base):
             return self.user_upload.processed
 
         return True
-    
+
     def chunk_content(self, chunk_size=2000, overlap=500):
         return [self.content[i:i + chunk_size]
-                  for i in range(0, len(self.content), chunk_size-overlap)]
+                for i in range(0, len(self.content), chunk_size-overlap)]
 
     def refresh_embeddings(self):
         session = object_session(self)
@@ -70,17 +70,14 @@ class Text(Base):
         from .embedding import Embedding
         session = object_session(self)
         embed_service = SentenceTransformerService()
-        chunks = self.chunk_content(chunk_size, overlap)
+        resp = embed_service.get_batch_embedding(self.content)
 
-        for chunk in chunks:
-            vector = embed_service.get_embedding(
-                text=f"{self.name} | {chunk}")
-
+        for chunk in resp:
             new_e = Embedding(
                 text_id=self.id,
                 user_id=self.user_id,
-                vector=vector,
-                content=chunk
+                vector=chunk["vector"],
+                content=chunk["source_text"]
             )
 
             session.add(new_e)
