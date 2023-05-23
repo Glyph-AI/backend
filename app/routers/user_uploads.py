@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, UploadFile, BackgroundTasks
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
+import os
 
 from app.dependencies import get_db, get_current_user
 # from app.models import UserUpload
@@ -39,9 +40,14 @@ def upload_file(bot_id: int, file: UploadFile, chat_id: int = None, db: Session 
         )
 
         chat_message_crud.create_chat_message(db, current_user, upload_message)
-    task = process_file.delay(upload_file_record.id, chat_id)
+    environment = os.getenv("ENVIRONMENT", "development")
+    if environment == "development":
+        process_file(upload_file_record.id, chat_id)
+        task_id = 1
+    else:
+        task_id = process_file.delay(upload_file_record.id, chat_id).id
 
-    return JSONResponse({"task_id": task.id})
+    return JSONResponse({"task_id": task_id})
 
 
 @user_uploads_router.get("/user_uploads", response_model=list[UserUpload])
