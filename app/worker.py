@@ -77,23 +77,23 @@ def process_file(user_upload_id, chat_id):
     db.commit()
     db.refresh(new_text)
 
-    # print(f"User Upload {user_upload_id}: Embedding File")
+    print(f"User Upload {user_upload_id}: Embedding File")
 
-    # new_text.refresh_embeddings()
+    new_text.refresh_embeddings()
 
-    # print(
-    #     f"User Upload {user_upload_id}: Processing Complete. Generating User Notification")
+    print(
+        f"User Upload {user_upload_id}: Processing Complete. Generating User Notification")
 
-    # user_upload.processed = True
+    user_upload.processed = True
 
-    # db_message = ChatMessage(
-    #     chat_id=chat_id,
-    #     role="system",
-    #     content=f"{filename} processing complete",
-    #     hidden=False
-    # )
+    db_message = ChatMessage(
+        chat_id=chat_id,
+        role="system",
+        content=f"{filename} processing complete",
+        hidden=False
+    )
 
-    # db.add(db_message)
-    # db.commit()
+    db.add(db_message)
+    db.commit()
 
     return True
