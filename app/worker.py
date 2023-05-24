@@ -2,9 +2,10 @@ from celery import Celery
 import openai
 import chardet
 import os
-from app.models import UserUpload, Embedding, Text, ChatMessage
+from app.models import UserUpload, Embedding, Text, ChatMessage, Embedding
 from app.dependencies import get_db
-from app.services import S3Service, PdfProcessor, ImageProcessor, AudioProcessor
+from app.services import S3Service, PdfProcessor, ImageProcessor, AudioProcessor, SentenceTransformerService
+
 
 celery = Celery(__name__)
 celery.conf.broker_url = os.environ.get(
@@ -19,6 +20,23 @@ openai.api_key = os.environ.get(
 
 def get_file_extension(filename):
     return filename.rsplit('.', 1)[1].lower()
+
+
+@celery.task(name="update_embeddings_to_new_field")
+def update_embeddings_to_new_field():
+    db = next(get_db())
+
+    # get all texts
+    embeddings = db.query(Embedding).all()
+    sts = SentenceTransformerService()
+
+    for e in embeddings:
+        new_e = sts.get_embedding(e.content)
+        e.vector_new = new_e
+
+    db.commit()
+
+    return True
 
 
 @celery.task(name="process_file")
