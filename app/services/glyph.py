@@ -11,6 +11,7 @@ import numpy as np
 from app.prompts import *
 from app.models import UserUpload, Text, Embedding, ChatMessage, ChatgptLog, Bot
 from .openai_service import OpenaiService
+from .sentence_transformer_service import SentenceTransformerService
 
 openai.api_key = os.environ.get(
     "OPENAI_API_KEY", "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")
@@ -28,6 +29,7 @@ class Glyph:
         self.bot = self.db.query(Bot).get(bot_id)
         self.tools = self.bot.enabled_tools
         self.openai = OpenaiService(self.db, self.chat_id)
+        self.transformer_service = SentenceTransformerService()
         self.user_message = ""
 
     def process_message(self, user_message: str):
@@ -119,7 +121,7 @@ class Glyph:
                   for i in range(0, len(combined_text), chunk_size-overlap)]
 
         for chunk in chunks:
-            embedding = self.openai.get_embedding(chunk)
+            embedding = self.transformer_service.get_embedding(chunk)
 
             new_e = Embedding(
                 bot_id=self.bot_id,
