@@ -39,7 +39,7 @@ When responding, please respond in the following format:
 ```
 {
     "action"": $ACTION, -- The action you should take based on your thought. If there are multiple steps required, this should be the first one in order.
-    "action_input": $ACTION_INPUT -- The input to the tool based on the user's input in plain english
+    "action_input": $ACTION_INPUT -- The input to the tool based on the user's input in plain english. This must be a single string, nothing else.
 }
 ```
 

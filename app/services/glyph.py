@@ -35,7 +35,7 @@ class Glyph:
     def process_message(self, user_message: str):
         try:
             self.archive()
-            self.user_message = ""
+            self.user_message = user_message
             prompt = self.format_base_prompt(
                 user_message, [i.format() for i in self.tools])
             initial_obj = self.openai.query_object(prompt)
@@ -87,7 +87,7 @@ class Glyph:
                 internal_message_array.append(chatgpt_response_object)
 
         except Exception as e:
-            print(e)
+            raise e
             return "I'm sorry, an internal error occurred, please try again!"
 
         return glyph_response
@@ -161,8 +161,11 @@ class Glyph:
         # get tool
         tool = self.search_for_tool(action)
         tool_class = tool.import_tool()
-        tool_obj = tool_class(self.db, self.bot_id,
-                              self.chat_id, internal_message_array=internal_message_array, original_message=self.user_message)
+        tool_obj = tool_class(self.db,
+                              self.bot_id,
+                              self.chat_id,
+                              internal_message_array=internal_message_array,
+                              original_message=self.user_message)
         response = tool_obj.execute(action_input)
 
         return action, response, tool_class.respond_direct
@@ -175,7 +178,7 @@ class Glyph:
 
             json_response = json.loads(cleaned_response)
         except Exception as e:
-            print(e)
+            raise e
             json_response = {"action": "Respond to User",
                              "action_input": "I'm sorry, an unknown exception as occurred. Please try again!"}
 
