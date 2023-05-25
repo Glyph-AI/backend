@@ -22,6 +22,23 @@ def get_file_extension(filename):
     return filename.rsplit('.', 1)[1].lower()
 
 
+@celery.task(name="update_embeddings")
+def update_embeddings():
+    db = next(get_db())
+
+    # get all texts
+    embeddings = db.query(Embedding).all()
+    sts = SentenceTransformerService()
+
+    for e in embeddings:
+        new_e = sts.get_embedding(e.content)
+        e.vector = new_e
+
+    db.commit()
+
+    return True
+
+
 @celery.task(name="update_embeddings_to_new_field")
 def update_embeddings_to_new_field():
     db = next(get_db())
