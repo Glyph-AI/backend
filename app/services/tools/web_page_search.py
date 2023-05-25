@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from bs4.element import Comment
 import requests
 import numpy as np
+from numpy.linalg import norm
 
 
 class WebPageSearch(BaseTool):
