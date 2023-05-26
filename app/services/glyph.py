@@ -87,7 +87,7 @@ class Glyph:
                 internal_message_array.append(chatgpt_response_object)
 
         except Exception as e:
-            raise e
+            print(e)
             return "I'm sorry, an internal error occurred, please try again!"
 
         return glyph_response
@@ -178,7 +178,7 @@ class Glyph:
 
             json_response = json.loads(cleaned_response)
         except Exception as e:
-            raise e
+            print(e)
             json_response = {"action": "Respond to User",
                              "action_input": "I'm sorry, an unknown exception as occurred. Please try again!"}
 
