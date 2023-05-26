@@ -41,7 +41,7 @@ class Chat(Base):
         from .chat_message import ChatMessage
         session = object_session(self)
         query = session.query(ChatMessage).filter(ChatMessage.created_at < period_end, ChatMessage.created_at >
-                                                  period_start, ChatMessage.role == "user", ChatMessage.chat_id == self.id)
+                                                  period_start, ChatMessage.role == "assistant", ChatMessage.content != "I'm sorry, an internal error occurred, please try again!", ChatMessage.chat_id == self.id)
         return query.count()
 
     @property
