@@ -2,6 +2,7 @@ import openai
 import os
 from app.models import ChatgptLog, ChatMessage
 from sqlalchemy.orm import Session
+from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 
 openai.api_key = os.environ.get(
@@ -48,8 +49,8 @@ class OpenaiService:
         return openai.Embedding.create(
             input=text, model="text-embedding-ada-002")['data'][0]['embedding']
 
+    @retry(wait=wait_random_exponential(min=1, max=30), stop=stop_after_attempt(6))
     def query_model(self, messages: list[dict]):
-
         self.__chatgpt_log(f"{messages}")
 
         response = openai.ChatCompletion.create(

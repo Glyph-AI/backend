@@ -177,7 +177,7 @@ class Glyph:
         except Exception as e:
             print(e)
             json_response = {"action": "Respond to User",
-                             "action_input": "I'm sorry, an unknown exception as occurred. Please try again!"}
+                             "action_input": "I'm sorry, an internal error occurred, please try again!"}
 
         return json_response["action"], json_response["action_input"]
 
