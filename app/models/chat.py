@@ -20,6 +20,7 @@ class Chat(Base):
     name = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"))
     bot_id = Column(Integer, ForeignKey("bots.id"))
+    deleted = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
 

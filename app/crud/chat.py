@@ -10,7 +10,9 @@ from app.errors import Errors
 
 def get_chats(db: Session, current_user: schemas.User):
     all_user_chats = db.query(Chat).filter(
-        Chat.user_id == current_user.id).all()
+        Chat.user_id == current_user.id, or_(Chat.deleted == None, Chat.deleted == False)).all()
+    print(str(db.query(Chat).filter(
+        Chat.user_id == current_user.id, or_(Chat.deleted == None, Chat.deleted == False))))
     # filter chats with bots that don't have sharing enabled
     user_owned = [
         i for i in all_user_chats if i.bot.creator_id == current_user.id]
@@ -32,13 +34,13 @@ def create_chat(chat_data: schemas.ChatBase, db: Session, current_user: schemas.
     chat_message_crud.create_chat_message(db, current_user, cm)
     return db_chat
 
-def delete_caht_by_id(chat_id: int, db: Session, current_user: schemas.User):
-    chat = db.query(Chat).filter(Chat.id == chat_id, Chat.user_id == current_user.id)
+def delete_chat_by_id(chat_id: int, db: Session, current_user: schemas.User):
+    chat = db.query(Chat).filter(Chat.id == chat_id, Chat.user_id == current_user.id).first()
 
     if not chat:
         raise Errors.credentials_error
     
-    db.delete(chat)
+    chat.deleted = True
     db.commit()
 
     return True
