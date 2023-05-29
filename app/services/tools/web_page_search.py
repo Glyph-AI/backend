@@ -58,7 +58,7 @@ class WebPageSearch(BaseTool):
 
         return found_texts
 
-    async def __embed(self, message):
+    def __embed(self, message):
         sts = SentenceTransformerService()
         query = sts.get_embedding(message)
 
