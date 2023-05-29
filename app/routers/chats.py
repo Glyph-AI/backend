@@ -67,6 +67,10 @@ def get_chats_by_user_id(db: Session = Depends(get_db), current_user: User = Dep
 def create_chat(chat_data: ChatCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return chat_crud.create_chat(chat_data, db, current_user)
 
+@chats_router.delete("/{chat_id}")
+def delete_chats(chat_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return chat_crud.delete_chat_by_id(chat_id, db, current_user)
+
 
 @chats_router.post("/{chat_id}/message", response_model=Chat)
 def send_message(message_data: ChatMessageCreate, chat_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
