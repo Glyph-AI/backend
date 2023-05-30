@@ -25,7 +25,15 @@ def get_file_extension(filename):
 def set_cookies(user):
     access_token = create_access_token(data={"sub": user.email})
     response = JSONResponse(
-        content={"access_token": access_token, "token_type": "bearer"})
+        content={
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user_id": user.id,
+            "name": f"{user.first_name} {user.last_name}",
+            "subscribed": user.subscription_in_good_standing,
+            "monthly_cost": user.monthly_cost
+        }
+    )
 
     cookie_expiration_delta = timedelta(
         minutes=ACCESS_TOKEN_EXPIRE_MINUTES)

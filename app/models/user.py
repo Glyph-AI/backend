@@ -169,6 +169,17 @@ class User(Base):
 
         return False
 
+    @property
+    def monthly_cost(self):
+        if self.subscription_in_good_standing:
+            active_subscription = self.active_subscriptions()[0]
+            if active_subscription.price_tier.name == "Annual":
+                return active_subscription.billed_price // 12
+
+            return active_subscription.billed_price
+
+        return 0
+
     def active_subscriptions(self):
         active = [
             s for s in self.subscriptions if s.deleted_at is None or s.deleted_at <= datetime.now()]
