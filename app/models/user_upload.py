@@ -19,3 +19,7 @@ class UserUpload(Base):
 
     user = relationship("User", back_populates="user_uploads")
     text = relationship("Text", back_populates="user_upload")
+
+    @property
+    def file_extension(self):
+        return self.filename.rsplit('.', 1)[1].lower()

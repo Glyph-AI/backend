@@ -159,7 +159,7 @@ class Glyph:
         action, action_input = self.parse_response(response)
 
         # get tool
-        tool = self.search_for_tool(action)
+        tool = self.search_for_tool(action.title())
         tool_class = tool.import_tool()
         tool_obj = tool_class(self.db,
                               self.bot_id,

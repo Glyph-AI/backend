@@ -55,12 +55,17 @@ class Text(Base):
         return True
 
     def embed(self, chunk_size=2000, overlap=500):
-        from app.services import SentenceTransformerService
+        from app.services import SentenceTransformerService, CsvChunker
         from .embedding import Embedding
         session = object_session(self)
         sts = SentenceTransformerService()
-        chunks = [self.content[i:i + chunk_size]
-                  for i in range(0, len(self.content), chunk_size-overlap)]
+        chunks = None
+        if self.text_type == "file" and self.user_upload.file_extension == "csv":
+            chunker = CsvChunker()
+            chunks = chunker.chunk(self.content)
+        else:
+            chunks = [self.content[i:i + chunk_size]
+                      for i in range(0, len(self.content), chunk_size-overlap)]
 
         for chunk in chunks:
             vector = sts.get_embedding(
