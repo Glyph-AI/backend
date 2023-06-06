@@ -16,7 +16,7 @@ class SentenceTransformerService():
         resp = requests.post(f"{self.url}/embed", json=data)
         return resp.json()["vector"]
 
-    def get_batch_embedding(self, text: str, chunk_size=2000, overlap=500):
+    def get_batch_embedding(self, text: str, chunk_size=1000, overlap=250):
         data = {
             "chunk_size": chunk_size,
             "overlap": overlap,

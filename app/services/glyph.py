@@ -115,8 +115,8 @@ class Glyph:
         combined_text = "\n".join(message_texts)
 
         # chunk if necessar
-        chunk_size = 2000
-        overlap = 500
+        chunk_size = 1000
+        overlap = 250
         chunks = [combined_text[i:i + chunk_size]
                   for i in range(0, len(combined_text), chunk_size-overlap)]
 

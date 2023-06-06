@@ -54,7 +54,7 @@ class Text(Base):
 
         return True
 
-    def embed(self, chunk_size=2000, overlap=500):
+    def embed(self, chunk_size=1000, overlap=250):
         from app.services import SentenceTransformerService
         from .embedding import Embedding
         session = object_session(self)
