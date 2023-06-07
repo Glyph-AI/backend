@@ -77,8 +77,9 @@ class User(Base):
             return 0
 
         if not self.subscription_in_good_standing:
-            period_start = self.created_at
-            period_end = period_start + relativedelta(months=1)
+            period_start = datetime.now().replace(day=1, hour=0, minute=0, second=0)
+            period_end = period_start + \
+                relativedelta(months=1) - timedelta(days=1)
             return sum([i.messages_in_period(
                 period_start, period_end) for i in self.chats])
 
