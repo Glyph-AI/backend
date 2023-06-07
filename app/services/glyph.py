@@ -150,7 +150,12 @@ class Glyph:
 
         return context
 
-    def search_for_tool(self, tool_name):
+    def search_for_tool(self, raw_name):
+        # catch weird Document search thing
+        tool_name = raw_name
+        if raw_name == "DOCUMENT SEARCH":
+            tool_name = "Document Search"
+
         for tool in self.tools:
             if tool.name == tool_name:
                 return tool
