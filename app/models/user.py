@@ -3,8 +3,9 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql import func
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm.session import object_session
+from dateutil.relativedelta import relativedelta
 import bcrypt
 
 from app.db.base_class import Base
@@ -76,7 +77,11 @@ class User(Base):
             return 0
 
         if not self.subscription_in_good_standing:
-            return sum([len(i.user_messages) for i in self.chats])
+            period_start = datetime.now().replace(day=1, hour=0, minute=0, second=0)
+            period_end = period_start + \
+                relativedelta(months=1) - timedelta(days=1)
+            return sum([i.messages_in_period(
+                period_start, period_end) for i in self.chats])
 
         active_subscription = self.active_subscriptions()[0]
         session = object_session(self)
