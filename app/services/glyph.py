@@ -156,6 +156,9 @@ class Glyph:
         if raw_name == "DOCUMENT SEARCH":
             tool_name = "Document Search"
 
+        if raw_name == "TEXT GENERATION":
+            tool_name = "Text Generation"
+
         for tool in self.tools:
             if tool.name == tool_name:
                 return tool
