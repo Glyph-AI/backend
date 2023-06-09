@@ -18,7 +18,9 @@ def create_app():
         "http://localhost:3002",
         "localhost:3002",
         FRONTEND_URL,
-        f"https://{FRONTEND_URL}"
+        f"https://{FRONTEND_URL}",
+        "ios.glyphassistant.com",
+        f"https://ios.glyphassistant.com"
     ]
 
     app.add_middleware(
