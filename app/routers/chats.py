@@ -8,7 +8,7 @@ import json
 
 
 from app.dependencies import get_db, get_current_user, ConnectionManager
-from app.schemas import ChatBase, Chat, User, ChatMessageCreate, ChatCreate
+from app.schemas import ChatBase, Chat, User, ChatMessageCreate, ChatCreate, ChatListItem
 from app.crud import chat as chat_crud
 from app.crud import user as user_crud
 from app.errors import Errors
@@ -58,7 +58,7 @@ def handle_message_creation(bot_id, chat_id, messageJson, db, current_user):
     return chatJson
 
 
-@chats_router.get("", response_model=list[Chat])
+@chats_router.get("", response_model=list[ChatListItem])
 def get_chats_by_user_id(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return chat_crud.get_chats(db, current_user)
 

@@ -42,7 +42,7 @@ class Chat(Base):
     def last_message(self):
         from .chat_message import ChatMessage
         session = object_session(self)
-        query = session.query(ChatMessage).filter(ChatMessage.chat_id == self.id).order(ChatMessage.created_at.desc()).first()
+        query = session.query(ChatMessage).filter(ChatMessage.chat_id == self.id).order_by(ChatMessage.created_at.desc())
 
         return query.first()
 

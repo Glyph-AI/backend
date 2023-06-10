@@ -11,8 +11,6 @@ from app.errors import Errors
 def get_chats(db: Session, current_user: schemas.User):
     all_user_chats = db.query(Chat).filter(
         Chat.user_id == current_user.id, or_(Chat.deleted == None, Chat.deleted == False)).all()
-    print(str(db.query(Chat).filter(
-        Chat.user_id == current_user.id, or_(Chat.deleted == None, Chat.deleted == False))))
     # filter chats with bots that don't have sharing enabled
     user_owned = [
         i for i in all_user_chats if i.bot.creator_id == current_user.id]
