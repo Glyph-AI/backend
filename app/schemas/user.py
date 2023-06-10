@@ -70,3 +70,8 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: str | None = None
+
+class BotTokenData(BaseModel):
+    id: int
+    email: str
+    chat_id: int | None = None

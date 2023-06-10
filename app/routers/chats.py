@@ -98,7 +98,6 @@ def send_message(message_data: ChatMessageCreate, chat_id: int, db: Session = De
 
     return responseJson
 
-
 @chats_router.get("/{chat_id}", response_model=Chat)
 def get_all_messages_for_chat(chat_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     output = chat_crud.get_chat_by_id(chat_id, db, current_user)
