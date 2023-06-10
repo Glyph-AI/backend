@@ -37,7 +37,7 @@ class Glyph:
             self.archive()
             self.user_message = user_message
             prompt = self.format_base_prompt(
-                user_message, [i.format() for i in self.tools])
+                user_message, [i.format() for i in self.tools if i.name != "Respond to User"])
             initial_obj = self.openai.query_object(prompt)
             internal_message_array = [initial_obj]
             list_response = self.openai.query_model(internal_message_array)

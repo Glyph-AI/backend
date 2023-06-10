@@ -4,13 +4,20 @@ from .base_tool import BaseTool
 
 
 class DocumentSearch(BaseTool):
+    def __cleanse_content(self, content):
+        return content.replace("\n", "").replace("\t", "")
+
     def execute(self, message):
         sts = SentenceTransformerService()
         embed = sts.get_embedding(message)
         top = self.db.query(Embedding).join(Text).join(BotText).filter(
             BotText.include_in_context == True, BotText.bot_id == self.bot_id
         ).order_by(Embedding.vector.l2_distance(embed).asc()).limit(4).all()
-        context = [i.content for i in top]
+        context = {}
+        for t in top:
+            cleansed_content = self.__cleanse_content(t.content)
+            context[t.text.name] = cleansed_content
+
         if len(context) == 0:
-            return ["NO INFORMATION FOUND"]
+            return "NO INFORMATION FOUND"
         return context
