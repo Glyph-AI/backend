@@ -38,11 +38,15 @@ async def api_chat(message_data: ApiChatMessageCreate, db: Session = Depends(get
         chat = chat_crud.create_chat(chat_data, db, bot_api_info.user)
     else:
         chat = chat_crud.get_chat_by_id(bot_api_info.chat_id, db, current_user=bot_api_info.user)
-    
+
     complete_message_data = ChatMessageCreate(
         role="user",
         content=message_data.content,
         chat_id=chat.id
+    )
+
+    handle_message_creation(
+        bot_api_info.bot.id, chat_id, complete_message_data, db, bot_api_info.user
     )
 
     print("MESSAGE CREATED")

@@ -29,6 +29,16 @@ class Chat(ChatBase):
     class Config:
         orm_mode = True
 
+class ChatListItem(ChatBase):
+    id: int
+    user_id: int
+    created_at: datetime | None = None
+    last_message: ChatMessage | None = None
+    chat_token: str | None = None
+
+    class Config:
+        orm_mode = True
+
 
 from .bot import BotBase  # noqa
 ChatBase.update_forward_refs()

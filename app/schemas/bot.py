@@ -33,7 +33,7 @@ class Bot(BotBase):
     id: int
     created_at: datetime
     users: list[User]
-    chats: "List[Chat]"
+    chats: "List[ChatListItem]"
     enabled_tools: list[Tool]
     enabled_texts: list[TextInfo]
     persona: Persona
@@ -64,7 +64,7 @@ class BotToken(BaseModel):
 
 
 
-from .chat import Chat  # noqa
+from .chat import ChatListItem  # noqa
 from .user import User  # noqa
 Bot.update_forward_refs()
 BotApiInfo.update_forward_refs()

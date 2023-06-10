@@ -37,6 +37,15 @@ class Chat(Base):
     @property
     def user_message_count(self):
         return len(self.user_messages)
+    
+    @property
+    def last_message(self):
+        from .chat_message import ChatMessage
+        session = object_session(self)
+        query = session.query(ChatMessage).filter(ChatMessage.chat_id == self.id).order(ChatMessage.created_at.desc()).first()
+
+        return query.first()
+
 
     def messages_in_period(self, period_start, period_end):
         from .chat_message import ChatMessage
