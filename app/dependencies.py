@@ -118,7 +118,9 @@ async def get_current_bot(db: Session = Depends(get_db), token: Token = Depends(
     user = user_crud.get_user_by_email(db, email=token_data.email)
     bot = bot_crud.get_bot_by_id(token_data.id, db, user)
 
-    if bot.creator_id != user.id:
+    # make sure the user calling the API is a user of this bot
+    bot_user = db.query(models.BotUser).filter(models.BotUser.user_id == user.id, models.BotUser.bot_id == bot.id).first()
+    if not bot_user:
         raise Errors.credentials_error
     
     info = BotApiInfo(user=user, bot=bot, chat_id=chat_id)
