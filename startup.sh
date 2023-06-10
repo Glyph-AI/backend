@@ -17,6 +17,6 @@ else
         echo "IN DEVELOPMENT"
         uvicorn --factory app.main:create_app --reload --host 0.0.0.0
     else
-        uvicorn --factory app.main:create_app --host 0.0.0.0 --workers 4
+        uvicorn --factory app.main:create_app --host 0.0.0.0 --workers 8
     fi
 fi
