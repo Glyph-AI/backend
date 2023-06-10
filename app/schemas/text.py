@@ -13,6 +13,7 @@ class TextBase(BaseModel):
 class Text(TextBase):
     id: int
     created_at: datetime
+    processed: bool
 
     class Config:
         orm_mode = True
@@ -22,7 +23,6 @@ class TextInfo(BaseModel):
     id: int
     text_type: str
     created_at: datetime
-    content: str
     name: str | None = None
     processed: bool | None = None
 

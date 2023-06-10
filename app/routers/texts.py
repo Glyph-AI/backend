@@ -9,7 +9,7 @@ from app.errors import Errors
 texts_router = APIRouter(tags=["Texts API"], prefix="/texts")
 
 
-@texts_router.get("", response_model=list[TextInfo])
+@texts_router.get("", response_model=list[Text])
 def get_texts(bot_id: int | None = None, text_type: str | None = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if bot_id:
         return text_crud.get_texts_by_bot_id(bot_id, db, current_user)
@@ -40,11 +40,11 @@ def embed_text_by_id(text_id: int,  db: Session = Depends(get_db), current_user:
     return text_crud.embed_text_by_id(text_id, db, current_user)
 
 
-@texts_router.delete("/{text_id}", response_model=list[TextInfo])
+@texts_router.delete("/{text_id}", response_model=list[Text])
 def delete_text(text_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return text_crud.delete_text_by_id(text_id, db, current_user)
 
 
-@texts_router.patch("/{text_id}/{bot_id}/status", response_model=list[TextInfo])
+@texts_router.patch("/{text_id}/{bot_id}/status", response_model=list[Text])
 def update_text_status_for_bot(text_id: int, bot_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return text_crud.update_text_status(text_id, bot_id, db, current_user)
