@@ -43,5 +43,6 @@ def create_app():
     app.include_router(personas_router)
     app.include_router(tools_router)
     app.include_router(texts_router)
+    app.include_router(public_router)
 
     return app

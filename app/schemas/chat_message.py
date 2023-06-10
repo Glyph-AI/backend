@@ -21,6 +21,9 @@ class ChatMessageCreate(BaseModel):
     class Config:
         orm_mode = True
 
+class ApiChatMessageCreate(BaseModel):
+    content: str
+
 
 class ChatMessageCreateHidden(BaseModel):
     role: str

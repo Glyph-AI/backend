@@ -54,6 +54,17 @@ class BotUpdate(BaseModel):
 class BotSharingAdd(BaseModel):
     sharing_code: str
 
+class BotApiInfo(BaseModel):
+    user: "User"
+    chat_id: int | None = None
+    bot: Bot
+
+class BotToken(BaseModel):
+    token: str
+
+
 
 from .chat import Chat  # noqa
+from .user import User  # noqa
 Bot.update_forward_refs()
+BotApiInfo.update_forward_refs()
