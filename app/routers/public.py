@@ -27,7 +27,7 @@ def handle_message_creation(bot_id, chat_id, messageJson, db, current_user):
     return chatJson
 
 
-@public_router.post("/chat")
+@public_router.post("/chat", response_model=Chat)
 async def api_chat(message_data: ApiChatMessageCreate, db: Session = Depends(get_db), bot_api_info: BotApiInfo = Depends(get_current_bot)):
     print("REQUEST START")
     chat_id = bot_api_info.chat_id

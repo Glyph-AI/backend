@@ -24,7 +24,6 @@ class Chat(ChatBase):
     user_id: int
     created_at: datetime | None = None
     chat_messages: list[ChatMessage] | None = None
-    chat_token: str | None = None
 
     class Config:
         orm_mode = True
@@ -34,7 +33,6 @@ class ChatListItem(ChatBase):
     user_id: int
     created_at: datetime | None = None
     last_message: ChatMessage | None = None
-    chat_token: str | None = None
 
     class Config:
         orm_mode = True
