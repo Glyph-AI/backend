@@ -1,6 +1,6 @@
 from fastapi import Depends, WebSocket, WebSocketDisconnect, status, HTTPException, Request
 from app.db.session import SessionLocal
-from fastapi.security import OAuth2, OAuth2PasswordBearer
+from fastapi.security import OAuth2, HTTPBearer
 from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
 from fastapi.security.utils import get_authorization_scheme_param
 from sqlalchemy.orm import Session
@@ -73,7 +73,7 @@ class OAuth2PasswordBearerWithCookie(OAuth2):
 oauth2_scheme = OAuth2PasswordBearerWithCookie(
     tokenUrl="/token", scheme_name="oauth2_scheme")
 
-bot_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token", scheme_name="oauth2_scheme")
+bot_bearer_scheme = HTTPBearer(scheme_name="public_oauth2_scheme")
 
 
 def get_db():
@@ -101,9 +101,9 @@ async def get_current_user(db: Session = Depends(get_db), token: Token = Depends
 
 # handles permissioning for bot keys
 # requires token in the format {email}|{bot_id}|{chat_id}
-async def get_current_bot(db: Session = Depends(get_db), token: Token = Depends(bot_oauth2_scheme)):
+async def get_current_bot(db: Session = Depends(get_db), token: Token = Depends(bot_bearer_scheme)):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token.credentials, SECRET_KEY, algorithms=[ALGORITHM])
         data = payload.get("sub").split("|")
         email = data[0]
         id = int(data[1])

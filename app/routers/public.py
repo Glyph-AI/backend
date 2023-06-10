@@ -8,7 +8,7 @@ from app.services import Glyph
 import app.crud.chat as chat_crud
 from datetime import datetime
 
-public_router = APIRouter(tags=["Public API"], prefix="/api/v1")
+public_router = APIRouter(tags=["Public API"], prefix="")
 
 def handle_message_creation(bot_id, chat_id, messageJson, db, current_user):
     chat_crud.create_message(

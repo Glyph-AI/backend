@@ -9,6 +9,10 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "")
 
 def create_app():
     app = FastAPI()
+    public_app = FastAPI(
+        title="Glyph Public API",
+        openapi_url="/api/v1/openapi.json"
+    )
 
     origins = [
         "http://localhost:3000",
@@ -43,6 +47,8 @@ def create_app():
     app.include_router(personas_router)
     app.include_router(tools_router)
     app.include_router(texts_router)
-    app.include_router(public_router)
+    public_app.include_router(public_router)
+
+    app.mount(path="/api/v1", app=public_app)
 
     return app
