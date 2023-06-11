@@ -9,13 +9,13 @@ openai.api_key = os.environ.get(
     "OPENAI_API_KEY", "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")
 
 MODEL = "gpt-3.5-turbo"
-TEMPERATURE = 0.0
 
 
 class OpenaiService:
-    def __init__(self, db: Session | None = None, chat_id: int | None = None):
+    def __init__(self, db: Session | None = None, chat_id: int | None = None, temperature=0.0):
         self.chat_id = chat_id
         self.db = db
+        self.temperature = temperature
 
     def __chatgpt_log(self, message_to_log: str):
         log = ChatgptLog(
@@ -55,7 +55,7 @@ class OpenaiService:
 
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            temperature=0.5,
+            temperature=self.temperature,
             messages=messages
         )["choices"][0]["message"]["content"]
 

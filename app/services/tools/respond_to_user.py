@@ -7,7 +7,7 @@ class RespondToUser(BaseTool):
     respond_direct = True
 
     def execute(self, message: str):
-        openai = OpenaiService(self.db, self.chat_id)
+        openai = OpenaiService(self.db, self.chat_id, temperature=0.7)
         messages = self.internal_message_array
 
         prompt = respond_to_user_prompt.format(
