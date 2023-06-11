@@ -97,7 +97,7 @@ def process_file(user_upload_id, chat_id):
     f = open(local_path, "rb")
     contents = f.read()
     encoding = chardet.detect(contents)['encoding']
-    decoded = contents.decode(encoding)
+    decoded = contents.decode(encoding).replace("\x00", "\uFFFD")
 
     # create a Text object
     new_text = Text(
