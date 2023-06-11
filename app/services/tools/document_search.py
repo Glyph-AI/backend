@@ -16,7 +16,10 @@ class DocumentSearch(BaseTool):
         context = {}
         for t in top:
             cleansed_content = self.__cleanse_content(t.content)
-            context[t.text.name] = cleansed_content
+            if t.text.name in context:
+                context[t.text.name] += f" | {cleansed_content}"
+            else:
+                context[t.text.name] = cleansed_content
 
         if len(context) == 0:
             return "NO INFORMATION FOUND"
