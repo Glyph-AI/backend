@@ -23,7 +23,6 @@ def create_bot(db: Session, current_user: schemas.User, bot_data: schemas.BotBas
     if not current_user.can_create_bots:
         raise Errors.out_of_bots
 
-    print(bot_data.dict())
     db_bot = Bot(name=bot_data.name, sharing_enabled=bot_data.sharing_enabled,
                  persona_id=bot_data.persona_id)
     db.add(db_bot)
@@ -37,12 +36,6 @@ def create_bot(db: Session, current_user: schemas.User, bot_data: schemas.BotBas
     ru_tool = db.query(Tool).filter(Tool.name == "Respond to User").first()
     db_bot_tool = BotTool(tool_id=ru_tool.id, bot_id=db_bot.id, enabled=True)
     db.add(db_bot_tool)
-    db.commit()
-    # add text generation tool
-    tg_tool = db.query(Tool).filter(Tool.name == "Text Generation").first()
-    db_bot_tool = BotTool(tool_id=tg_tool.id, bot_id=db_bot.id, enabled=True)
-    db.add(db_bot_tool)
-    db.add(tg_tool)
     db.commit()
 
     # mark all incoming tools as enabled
