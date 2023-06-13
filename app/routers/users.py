@@ -87,8 +87,8 @@ async def create_user(user_create_data: UserCreate, db: Session = Depends(get_db
     new_user = user_crud.create_user(db, user_create_data)
     stripe_svc = StripeService(db)
     stripe_svc.create_customer(new_user)
-    return new_user
-
+    response = set_cookies(new_user)
+    return response
 
 @users_router.post("/login")
 async def login_user(user_login_info: UserLogin, db: Session = Depends(get_db)):
