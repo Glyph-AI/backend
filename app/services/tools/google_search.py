@@ -24,7 +24,7 @@ class GoogleSearch(BaseTool):
     def __get_results(self, search_query):
         raw = requests.get(self.__url(search_query)).json()["items"]
         array_results = [
-            {"url": i['link'], "description": i["snippet"], "title": i['title']} for i in raw][:5]
+            {"url": i['link'], "description": i["snippet"], "title": i['title']} for i in raw][:7]
         return array_results
 
     def execute(self, message):

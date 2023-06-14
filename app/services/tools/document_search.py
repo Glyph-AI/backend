@@ -12,7 +12,7 @@ class DocumentSearch(BaseTool):
         embed = sts.get_embedding(message)
         top = self.db.query(Embedding).join(Text).join(BotText).filter(
             BotText.include_in_context == True, BotText.bot_id == self.bot_id
-        ).order_by(Embedding.vector.l2_distance(embed).asc()).limit(4).all()
+        ).order_by(Embedding.vector.l2_distance(embed).asc()).limit(16).all()
         context = {}
         for t in top:
             cleansed_content = self.__cleanse_content(t.content)
