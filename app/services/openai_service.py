@@ -54,7 +54,7 @@ class OpenaiService:
         self.__chatgpt_log(f"{messages}")
 
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model=MODEL,
             temperature=self.temperature,
             messages=messages
         )["choices"][0]["message"]["content"]
