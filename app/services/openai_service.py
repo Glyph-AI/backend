@@ -8,7 +8,7 @@ from tenacity import retry, stop_after_attempt, wait_random_exponential
 openai.api_key = os.environ.get(
     "OPENAI_API_KEY", "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")
 
-MODEL = "gpt-3.5-turbo"
+MODEL = "gpt-3.5-turbo-16k"
 
 
 class OpenaiService:

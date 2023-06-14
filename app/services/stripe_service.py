@@ -1,5 +1,5 @@
 import stripe
-from app.models import User, Subscription, PriceTier
+from app.models import User, Subscription, PriceTier, Product
 from sqlalchemy.orm import Session
 import os
 import json
@@ -128,8 +128,30 @@ class StripeService():
                 self.db.commit()
 
         # handle product creation
+        if event_type == "product.created":
+            event_object = event["data"]["object"]
+            self.create_product(event_object)
+        
         # handle product updating
+        if event_type == "product.updated":
+            event_object = event["data"]["object"]
+
+            product = self.db.query(Product).filter_by(id=event_object["id"]).first()
+            if not product:
+                self.create_product(event_object)
+
+            else:
+                product.description = event_object["description"]
+
+            self.db.commit()
         # handle product deletion
+        if event_type == "product.deleted":
+            event_object = event["data"]["object"]
+
+            product = self.db.query(Product).filter_by(id=event_object["id"]).first()
+
+            self.db.delete(product)
+            self.db.commit()
         # handle price creation
         if event_type == 'price.created':
             event_object = event["data"]["object"]
@@ -188,6 +210,18 @@ class StripeService():
                 self.db.commit()
 
         return True
+    
+    def create_product(self, event_object):
+        product = Product(
+            id=event_object["id"],
+            description=event_object["description"]
+        )
+
+        self.db.add(product)
+        self.db.commit()
+        self.db.refresh(product)
+
+        return product
 
     def create_price_tier(self, event_object):
         pt = PriceTier(
