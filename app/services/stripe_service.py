@@ -83,6 +83,16 @@ class StripeService():
 
             user = self.db.query(User).filter_by(
                 stripe_customer_id=customer_id).first()
+            
+            # handle user subscribing from the website not from the app
+            if not user:
+                customer_email = event['data']['object']['customer_email']
+                user = self.db.query(User).filter_by(
+                    email=customer_email
+                ).first()
+
+                user.stripe_customer_id = customer_id
+                self.db.commit()
 
             subscription_id = event['data']['object']['subscription']
 
