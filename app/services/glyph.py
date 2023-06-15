@@ -23,7 +23,7 @@ class Glyph:
         self.bot_id = bot_id
         self.chat_id = chat_id
         self.user_id = user_id
-        self.message_history_to_include = 8
+        self.message_history_to_include = 16
         self.history_threshold = 2000
         self.max_iter = 5
         self.bot = self.db.query(Bot).get(bot_id)
