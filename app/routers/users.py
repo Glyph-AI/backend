@@ -93,7 +93,7 @@ async def create_user(user_create_data: UserCreate, db: Session = Depends(get_db
 @users_router.post("/login")
 async def login_user(user_login_info: UserLogin, db: Session = Depends(get_db)):
     possible_user = db.query(models.User).filter(
-        models.User.email == user_login_info.email).first()
+        models.User.email == user_login_info.email.lower()).first()
     print("-" * 80)
     print(possible_user)
     if possible_user is None:
