@@ -5,10 +5,12 @@ from sqlalchemy.orm import Session
 from app.dependencies import get_db, get_current_bot
 from app.schemas import BotApiInfo, ChatBase, ChatMessageCreate, Chat, ApiChatMessageCreate
 from app.services import Glyph
+from app.errors import Errors
 import app.crud.chat as chat_crud
 from datetime import datetime
 
 public_router = APIRouter(tags=["Public API"], prefix="")
+
 
 def handle_message_creation(bot_id, chat_id, messageJson, db, current_user):
     chat_crud.create_message(
@@ -32,12 +34,18 @@ async def api_chat(message_data: ApiChatMessageCreate, db: Session = Depends(get
     print("REQUEST START")
     chat_id = bot_api_info.chat_id
 
+    # make sure the user associated with this bot has messages left
+    if bot_api_info.user.messages_left <= 0:
+        raise Errors.out_of_messages
+
     chat = None
     if not chat_id:
-        chat_data = ChatBase(name= f"API Chat {datetime.now().timestamp()}", bot_id=bot_api_info.bot.id, bot=bot_api_info.bot)
+        chat_data = ChatBase(
+            name=f"API Chat {datetime.now().timestamp()}", bot_id=bot_api_info.bot.id, bot=bot_api_info.bot)
         chat = chat_crud.create_chat(chat_data, db, bot_api_info.user)
     else:
-        chat = chat_crud.get_chat_by_id(bot_api_info.chat_id, db, current_user=bot_api_info.user)
+        chat = chat_crud.get_chat_by_id(
+            bot_api_info.chat_id, db, current_user=bot_api_info.user)
 
     complete_message_data = ChatMessageCreate(
         role="user",
