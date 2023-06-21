@@ -33,7 +33,11 @@ class Text(Base):
     def name(self):
         if self._name is not None:
             return self._name
-        return self.user_upload.filename
+
+        if self.user_upload:
+            return self.user_upload.filename
+
+        return self.id
 
     @name.setter
     def name(self, name_string):

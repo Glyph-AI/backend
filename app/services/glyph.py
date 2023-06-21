@@ -32,12 +32,19 @@ class Glyph:
         self.transformer_service = SentenceTransformerService()
         self.user_message = ""
 
+    def __initial_tools(self):
+        # for now force it to do something if Document Search is actually present in the tool list
+        if "Document Search" in [i.name for i in self.tools]:
+            return [i.format() for i in self.tools if i.name != "Respond to User"]
+
+        return [[i.format() for i in self.tools]]
+
     def process_message(self, user_message: str):
         try:
             self.archive()
             self.user_message = user_message
             prompt = self.format_base_prompt(
-                user_message, [i.format() for i in self.tools if i.name != "Respond to User"])
+                user_message, self.__initial_tools())
             initial_obj = self.openai.query_object(prompt)
             internal_message_array = [initial_obj]
             list_response = self.openai.query_model(internal_message_array)

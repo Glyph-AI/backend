@@ -12,9 +12,12 @@ class WebPageSearch(BaseTool):
 
     def __extract_url_from_message(self, message):
         ext = URLExtract()
-        url = ext.find_urls(message)[0]
+        urls = ext.find_urls(message)
 
-        return url
+        if len(urls) == 0:
+            return "NO URL FOUND"
+
+        return urls[0]
 
     def __tag_visible(self, element):
         if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
@@ -64,14 +67,11 @@ class WebPageSearch(BaseTool):
 
         return query
 
-    def __filter_page_by_query(self, q_vector, page_vectors):
-        sim = np.dot(q_vector, page_vectors.T)
-        top_3 = np.argpartition(sim, -3)[-3:]
-
-        return top_3
-
     def execute(self, message):
         url = self.__extract_url_from_message(self.original_message)
+
+        if url == "NO URL FOUND":
+            return "NO INFORMATION FOUND"
 
         text = self.__extract_text_from_url(url)
 
