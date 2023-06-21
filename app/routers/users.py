@@ -90,6 +90,7 @@ async def create_user(user_create_data: UserCreate, db: Session = Depends(get_db
     response = set_cookies(new_user)
     return response
 
+
 @users_router.post("/login")
 async def login_user(user_login_info: UserLogin, db: Session = Depends(get_db)):
     possible_user = db.query(models.User).filter(
@@ -152,9 +153,11 @@ async def auth_google(google_token: GoogleAuth, db: Session = Depends(get_db)):
                 "last_name": google_user["family_name"],
                 "email": google_user["email"],
                 "google_user_id": userid,
-                "role": "user",
-                "profile_picture_location": google_user["picture"]
+                "role": "user"
             }
+
+            if "picture" in google_user:
+                user_data["profile_picture_location"] = google_user["picture"]
 
             user_create_data = UserCreateSSO(**user_data)
             db_user = user_crud.create_user(db, user_create_data)

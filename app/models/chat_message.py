@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -11,7 +11,7 @@ class ChatMessage(Base):
     id = Column(Integer, primary_key=True, index=True)
     chat_id = Column(Integer, ForeignKey("chats.id"))
     role = Column(String, nullable=False)
-    content = Column(String(12000), nullable=False)
+    content = Column(Text, nullable=False)
     hidden = Column(Boolean, default=False)
     archived = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True),
