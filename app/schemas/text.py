@@ -35,6 +35,11 @@ class TextCreate(TextBase):
         orm_mode = True
 
 
+class TextPublicCreate(BaseModel):
+    name: str
+    content: str
+
+
 class BotTextStatusUpdate(BaseModel):
     bot_id: int
     text_id: int

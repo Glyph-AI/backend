@@ -54,14 +54,15 @@ class BotUpdate(BaseModel):
 class BotSharingAdd(BaseModel):
     sharing_code: str
 
+
 class BotApiInfo(BaseModel):
     user: "User"
     chat_id: int | None = None
     bot: Bot
 
+
 class BotToken(BaseModel):
     token: str
-
 
 
 from .chat import ChatListItem  # noqa

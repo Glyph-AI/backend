@@ -73,7 +73,10 @@ class OAuth2PasswordBearerWithCookie(OAuth2):
 oauth2_scheme = OAuth2PasswordBearerWithCookie(
     tokenUrl="/token", scheme_name="oauth2_scheme")
 
-bot_bearer_scheme = HTTPBearer(scheme_name="public_oauth2_scheme")
+public_api_bearer_scheme = HTTPBearer(
+    scheme_name="Public User Authorization Scheme")
+public_api_bearer_scheme_bots = HTTPBearer(
+    scheme_name="Public Bot Authorization Scheme")
 
 
 def get_db():
@@ -99,11 +102,35 @@ async def get_current_user(db: Session = Depends(get_db), token: Token = Depends
 
     return user
 
+
+async def get_current_user_public_api(db: Session = Depends(get_db), token: Token = Depends(public_api_bearer_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise Errors.credentials_error
+        token_data = TokenData(email=email)
+    except JWTError:
+        raise Errors.credentials_error
+    user = user_crud.get_user_by_email(db, email=token_data.email)
+    if user is None:
+        raise Errors.credentials_error
+
+    # verify that incoming token is valid for this user
+    is_valid_token = user.verify_incoming_token(payload)
+    if not is_valid_token:
+        raise Errors.credentials_error
+
+    return user
+
 # handles permissioning for bot keys
 # requires token in the format {email}|{bot_id}|{chat_id}
-async def get_current_bot(db: Session = Depends(get_db), token: Token = Depends(bot_bearer_scheme)):
+
+
+async def get_current_bot(db: Session = Depends(get_db), token: Token = Depends(public_api_bearer_scheme_bots)):
     try:
-        payload = jwt.decode(token.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token.credentials, SECRET_KEY,
+                             algorithms=[ALGORITHM])
         data = payload.get("sub").split("|")
         email = data[0]
         id = int(data[1])
@@ -119,10 +146,11 @@ async def get_current_bot(db: Session = Depends(get_db), token: Token = Depends(
     bot = bot_crud.get_bot_by_id(token_data.id, db, user)
 
     # make sure the user calling the API is a user of this bot
-    bot_user = db.query(models.BotUser).filter(models.BotUser.user_id == user.id, models.BotUser.bot_id == bot.id).first()
+    bot_user = db.query(models.BotUser).filter(
+        models.BotUser.user_id == user.id, models.BotUser.bot_id == bot.id).first()
     if not bot_user:
         raise Errors.credentials_error
-    
+
     info = BotApiInfo(user=user, bot=bot, chat_id=chat_id)
 
     return info
@@ -142,6 +170,7 @@ def create_access_token(data: dict):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
 
 def create_bot_access_token(data: dict):
     to_encode = data.copy()

@@ -41,6 +41,7 @@ class User(Base):
     embeddings = relationship("Embedding", back_populates="user")
     chats = relationship("Chat", back_populates="user")
     subscriptions = relationship("Subscription", back_populates="user")
+    user_tokens = relationship("UserToken", back_populates="user")
 
     @hybrid_property
     def password(self):
@@ -54,6 +55,19 @@ class User(Base):
 
     def check_password(self, plaintext):
         return bcrypt.checkpw(plaintext.encode("utf-8"), self._password.encode("utf-8"))
+
+    @property
+    def non_expired_tokens(self):
+        current_date = datetime.now()
+        return [i for i in self.user_tokens if i.expiration_date > current_date]
+
+    def verify_incoming_token(self, incoming_payload):
+        tokens_to_check = self.non_expired_tokens
+        for t in tokens_to_check:
+            if t.check_token(incoming_payload):
+                return True
+
+        return False
 
     @property
     def subscribed(self):

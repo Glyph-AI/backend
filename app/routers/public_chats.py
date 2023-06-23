@@ -2,14 +2,15 @@ from fastapi import APIRouter, Depends, UploadFile
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_db, get_current_bot
-from app.schemas import BotApiInfo, ChatBase, ChatMessageCreate, Chat, ApiChatMessageCreate
+from app.dependencies import get_db, get_current_bot, get_current_user_public_api
+from app.schemas import Text, User, BotApiInfo, ChatBase, ChatMessageCreate, Chat, ApiChatMessageCreate, TextInfo
 from app.services import Glyph
 from app.errors import Errors
 import app.crud.chat as chat_crud
+import app.crud.text as text_crud
 from datetime import datetime
 
-public_router = APIRouter(tags=["Public API"], prefix="")
+public_chats_router = APIRouter(tags=["Chats"], prefix="")
 
 
 def handle_message_creation(bot_id, chat_id, messageJson, db, current_user):
@@ -29,7 +30,7 @@ def handle_message_creation(bot_id, chat_id, messageJson, db, current_user):
     return chatJson
 
 
-@public_router.post("/chat", response_model=Chat)
+@public_chats_router.post("/chat", response_model=Chat)
 async def api_chat(message_data: ApiChatMessageCreate, db: Session = Depends(get_db), bot_api_info: BotApiInfo = Depends(get_current_bot)):
     print("REQUEST START")
     chat_id = bot_api_info.chat_id
