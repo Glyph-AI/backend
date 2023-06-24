@@ -51,7 +51,7 @@ class User(UserBase):
     allowed_files: int
     subscription_canceled: bool
     is_current: bool
-    notifications: bool
+    notifications: bool | None = None
 
     class Config:
         orm_mode = True
