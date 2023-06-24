@@ -32,6 +32,7 @@ class User(Base):
     allow_public_profile_picture = Column(Boolean, default=False)
     stripe_customer_id = Column(String)
     is_current = Column(Boolean, default=False)
+    notifications = Column(Boolean)
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
 
