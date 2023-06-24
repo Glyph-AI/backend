@@ -21,6 +21,7 @@ class UserBase(BaseModel):
 
 class UserUpdate(BaseModel):
     id: int
+    notifications: bool | None = None
     first_name: str | None = None
     last_name: str | None = None
     password: str | None = None
@@ -50,6 +51,7 @@ class User(UserBase):
     allowed_files: int
     subscription_canceled: bool
     is_current: bool
+    notifications: bool
 
     class Config:
         orm_mode = True
