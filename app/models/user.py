@@ -67,6 +67,10 @@ class User(Base):
     @property
     def bots_left(self):
         if self.subscription_in_good_standing:
+            active_subscription = self.active_subscriptions()[0]
+            bots_limit = active_subscription.price_tier.product.bot_limit
+            if bots_limit > 0:
+                return bots_limit - len(self.bots)
             return -1
 
         return FREEMIUM_BOTS - len(self.bots)
@@ -114,10 +118,11 @@ class User(Base):
         message_count = self.message_count
         if self.subscription_in_good_standing:
             active_subscription = self.active_subscriptions()[0]
+            message_limit = active_subscription.price_tier.product.message_limit
             if active_subscription.price_tier.name == "Annual":
-                return ANNUAL_SUBSCRIPTION_MESSAGES - message_count
+                return (message_limit * 12) - message_count
 
-            return SUBSCRIPTION_MESSAGES - message_count
+            return message_limit - message_count
 
         return FREEMIUM_MESSAGES - self.message_count
 
@@ -126,19 +131,29 @@ class User(Base):
         if not self.subscription_in_good_standing:
             return FREEMIUM_FILES - len(self.texts)
 
+        active_subscription = self.active_subscriptions()[0]
+        files_limit = active_subscription.price_tier.product.text_limit
+        if files_limit > 0:
+            return files_limit - len(self.texts)
+
         return -1
 
     @property
     def allowed_files(self):
         if self.subscription_in_good_standing:
-            return -1
+            active_subscription = self.active_subscriptions()[0]
+            files_limit = active_subscription.price_tier.product.text_limit
+            return files_limit
 
         return FREEMIUM_FILES
 
     @property
     def allowed_bots(self):
         if self.subscription_in_good_standing:
-            return -1
+            active_subscription = self.active_subscriptions()[0]
+            bots_limit = active_subscription.price_tier.product.bot_limit
+            return bots_limit
+
 
         return FREEMIUM_BOTS
 
@@ -146,10 +161,11 @@ class User(Base):
     def allowed_messages(self):
         if self.subscription_in_good_standing:
             active_subscription = self.active_subscriptions()[0]
+            message_limit = active_subscription.price_tier.product.message_limit
             if active_subscription.price_tier.name == "Annual":
-                return ANNUAL_SUBSCRIPTION_MESSAGES
+                return message_limit * 12
 
-            return SUBSCRIPTION_MESSAGES
+            return message_limit
 
         return FREEMIUM_MESSAGES
 
