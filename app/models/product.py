@@ -15,4 +15,4 @@ class Product(Base):
     created_at = Column(DateTime(timezone=True),
                 server_default=func.now())
     
-    price_tiers = relationship("PriceTier", back_populates="price_tiers")
+    price_tiers = relationship("PriceTier", back_populates="product")
