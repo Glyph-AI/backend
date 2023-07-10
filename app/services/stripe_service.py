@@ -1,5 +1,5 @@
 import stripe
-from app.models import User, Subscription, PriceTier
+from app.models import User, Subscription, PriceTier, Product
 from sqlalchemy.orm import Session
 import os
 import json
@@ -138,8 +138,35 @@ class StripeService():
                 self.db.commit()
 
         # handle product creation
+        if event_type == "product.created":
+            event_object = event["data"]["object"]
+            self.create_product(event_object)
         # handle product updating
+        if event_type == "product.updated":
+            p = self.db.query(Product).filter_by(
+                id=event["data"]["object"]["id"]).first()
+            
+            event_object = event["data"]["object"]
+
+            if not p:
+                self.create_product(event_object)
+            else:
+                p.message_limit = event_object["metadata"]["message_limit"]
+                p.bot_limit = event_object["metadata"]["bot_limit"]
+                p.text_limit = event_object["metadata"]["text_limit"]
+                p.name = event_object["name"]
+
+                self.db.commit()
         # handle product deletion
+        if event_type == "product.deleted": 
+            p = self.db.query(Product).filter_by(
+                id=event["data"]["object"]["id"]).first()
+            
+            event_object = event["data"]["object"]
+
+            if p:
+                self.db.delete(p)
+                
         # handle price creation
         if event_type == 'price.created':
             event_object = event["data"]["object"]
@@ -161,7 +188,7 @@ class StripeService():
                 self.db.add(pt)
             else:
                 unit_amount = float(event_object["unit_amount_decimal"])
-
+                pt.product_id = event["data"]["object"]["product"]
                 pt.price = unit_amount or pt.price
                 pt.name = event["data"]["object"]["nickname"] or pt.name
 
@@ -203,7 +230,8 @@ class StripeService():
         pt = PriceTier(
             id=event_object["id"],
             name=event_object["nickname"] or "",
-            price=float(event_object["unit_amount_decimal"])
+            price=float(event_object["unit_amount_decimal"]),
+            product_id=event_object["product"]
         )
 
         self.db.add(pt)
@@ -211,6 +239,21 @@ class StripeService():
         self.db.refresh(pt)
 
         return pt
+    
+    def create_product(self, event_object):
+        p = Product(
+            id=event_object["id"],
+            name=event_object["name"],
+            message_limit=event_object["metadata"]["message_limit"],
+            bot_limit=event_object["metadata"]["bot_limit"],
+            text_limit=event_object["metadata"]["text_limit"]
+        )
+
+        self.db.add(p)
+        self.db.commit()
+        self.db.refresh(p)
+
+        return p
 
     def cancel_subscription(self, subscription):
         stripe.Subscription.delete(subscription.subscriptpion_item_id)
