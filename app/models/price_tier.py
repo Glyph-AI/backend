@@ -16,5 +16,5 @@ class PriceTier(Base):
                     server_default=func.now())
     
     subscriptions = relationship("Subscription", back_populates="price_tier")
-    product = relationship("")
+    product = relationship("Product", back_populates="products")
 
