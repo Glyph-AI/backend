@@ -188,6 +188,6 @@ class User(Base):
 
     def active_subscriptions(self):
         active = [
-            s for s in self.subscriptions if s.deleted_at is None or s.deleted_at <= datetime.now()]
+            s for s in self.subscriptions if s.deleted_at is None or s.deleted_at >= datetime.now()]
         active.sort(key=lambda x: x.created_at, reverse=True)
         return active
