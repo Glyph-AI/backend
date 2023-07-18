@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Request, Header
 from fastapi.responses import JSONResponse
+from apiclient.discovery import build
 from sqlalchemy.orm import Session
 import os
 from enum import Enum
@@ -43,3 +44,14 @@ async def webhook_receive(request: Request, stripe_signature: str = Header(None)
     stripe_svc.handle_webhook(stripe_data, stripe_signature)
 
     return JSONResponse(content={"status": "success"})
+
+@subscriptions_router.post("/google-verification")
+async def verify_google_purchase(googleToken: str, db: Session = Depends(get_db)):
+    service = build('androidpublisher', 'v3')
+    package_name = "com.glyphassistant.app.twa"
+    subscription_id = "glyph"
+    try:
+        resp = service.purchases().subscriptions().get(package_name, subscription_id, googleToken)
+        return {"success": True}
+    except:
+        return {"success": False}
