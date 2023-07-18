@@ -92,13 +92,19 @@ class User(Base):
         session = object_session(self)
 
         if active_subscription.current_window_end_date is None or datetime.now(timezone.utc) > active_subscription.current_window_end_date:
-            print("NO VALUE SET, QUERYING STRIPE")
-            period_start, period_end = StripeService.get_user_current_window(
-                active_subscription.stripe_subscription_id)
 
-            active_subscription.current_window_start_date = period_start
-            active_subscription.current_window_end_date = period_end
-            session.commit()
+            # if our subscription is from Stripe query Stripe
+            if not active_subscription.is_google:
+                print("NO VALUE SET, QUERYING STRIPE")
+                period_start, period_end = StripeService.get_user_current_window(
+                    active_subscription.stripe_subscription_id)
+
+                active_subscription.current_window_start_date = period_start
+                active_subscription.current_window_end_date = period_end
+                session.commit()
+            # query Google Play
+            else:
+                pass
 
         user_messages_in_period = sum([i.messages_in_period(
             active_subscription.current_window_start_date, active_subscription.current_window_end_date) for i in self.chats])
