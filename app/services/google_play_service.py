@@ -13,7 +13,7 @@ GRACE_PERIOD_DAYS = 7
 
 class GooglePlayService():
     def __init__(self, db: Session):
-        self.service = build('androidpublisher', 'v3')
+        # self.service = build('androidpublisher', 'v3')
         self.db = db
         self.webhook_method_map = {
             "SUBSCRIPTION_RECOVERED": self.handle_recovery,
@@ -150,7 +150,9 @@ class GooglePlayService():
         return True
         
     def handle_webhook(self, webhook_event):
-        event = json.loads(base64.decode(webhook_event["message"]["data"]))
+        print("-" * 80)
+        print(base64.b64decode(webhook_event["message"]["data"]).decode('utf-8'))
+        event = json.loads(base64.b64decode(webhook_event["message"]["data"]).decode('utf-8'))
         
         notification = event["subscriptionNotification"]
         try:

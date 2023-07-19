@@ -9,7 +9,7 @@ from enum import Enum
 from app.dependencies import get_db, get_current_user
 from app.models import PriceTier, Subscription
 from app.schemas import User
-from app.services import StripeService
+from app.services import StripeService, GooglePlayService
 
 subscriptions_router = APIRouter(tags=["Subscriptions API"])
 
@@ -49,30 +49,10 @@ async def webhook_receive(request: Request, stripe_signature: str = Header(None)
 
 @subscriptions_router.post("/google-verification")
 async def verify_google_purchase(googleToken: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    service = build('androidpublisher', 'v3')
-    # for now the only subscription option on Google Play will be the Lite subscription
-    package_name = "com.glyphassistant.app.twa"
-    subscription_id = "glyph"
-    try:
-        # verify purchase
-        resp = service.purchases().subscriptions().get(package_name, subscription_id, googleToken)
-        # grant access by creating a subscription
-        price_tier = db.query(PriceTier).filter(PriceTier.price == 499).first()
-        subscription = Subscription(
-            user_id=current_user.id,
-            price_tier_id=price_tier.id,
-            google_token=googleToken,
-            current_window_start_date=datetime.now(),
-            current_window_end_date=datetime.fromtimestamp(resp.expiryTimeMillis)
-        )
-
-        db.add(subscription)
-        db.commit()
-        db.refresh(subscription)
-        # acknolwedge to the server
-        return {"success": True}
-    except:
-        return {"success": False}
+    gps = GooglePlayService(db)
+    return {"success": gps.validate_subscription(googleToken, current_user)} 
     
 @subscriptions_router.post("/google-webhook")
-async def google_webhook
+async def google_webhook(webhook_event: dict, db: Session = Depends(get_db)):
+    gps = GooglePlayService(db)
+    return gps.handle_webhook(webhook_event)
