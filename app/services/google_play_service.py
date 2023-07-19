@@ -88,11 +88,8 @@ class GooglePlayService():
             return False
         
     def get_user_from_purchase_token(self, token):
-        resp = self.get_subscription_from_play(token)
-        email = resp["emailAddress"]
-        user = self.db.query(User).filter(User.email == email)
-
-        return user
+        sub = self.db.query(Subscription).filter(Subscription.google_token == token).first()
+        return sub.user
         
     def handle_recovery(self, notification):
         self.handle_renewal(notification)
