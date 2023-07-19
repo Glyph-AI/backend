@@ -71,7 +71,7 @@ class GooglePlayService():
                 price_tier_id=price_tier.id,
                 google_token=googleToken,
                 current_window_start_date=datetime.now(),
-                current_window_end_date=datetime.fromtimestamp(float(resp["expiryTimeMillis"]))
+                current_window_end_date=datetime.fromtimestamp(int(resp["expiryTimeMillis"]) // 1000)
             )
 
             self.db.add(subscription)
@@ -103,7 +103,7 @@ class GooglePlayService():
         
         # assume that the renewal is right at the start of the new period
         user_sub.current_window_start_date = datetime.now()
-        user_sub.current_window_end_date = datetime.fromtimestamp(float(resp["expiryTimeMillis"])) + timedelta(days=7)
+        user_sub.current_window_end_date = datetime.fromtimestamp(int(resp["expiryTimeMillis"]) // 1000) + timedelta(days=7)
 
         if user_sub.deleted_at:
             user_sub.deleted_at = None
@@ -138,7 +138,7 @@ class GooglePlayService():
                 price_tier_id=price_tier.id,
                 google_token=notification["purchaseToken"],
                 current_window_start_date=datetime.now(),
-                current_window_end_date=datetime.fromtimestamp(float(resp["expiryTimeMillis"])) + timedelta(days=7)
+                current_window_end_date=datetime.fromtimestamp(int(resp["expiryTimeMillis"]) // 1000) + timedelta(days=7)
             )
 
             self.db.add(subscription)
