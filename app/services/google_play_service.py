@@ -16,19 +16,44 @@ class GooglePlayService():
         # self.service = build('androidpublisher', 'v3')
         self.db = db
         self.webhook_method_map = {
-            "SUBSCRIPTION_RECOVERED": self.handle_recovery,
-            "SUBSCRIPTION_RENEWED": self.handle_renewal,
-            "SUBSCRIPTION_CANCELED": self.handle_cancel,
-            "SUBSCRIPTION_PURCHASED": self.handle_purchase,
-            "SUBSCRIPTION_ON_HOLD": self.handle_hold,
+            # SUBSCRIPTION_RECOVERED
+            1: self.handle_recovery,
+            
+            # SUBSCRIPTION_RENEWED
+            2: self.handle_renewal,
+            
+            # SUBSCRIPTION_CANCELED
+            3: self.handle_cancel,
+            
+            # SUBSCRIPTION_PURCHASED
+            4: self.handle_purchase,
+            
+            # SUBSCRIPTION_ON_HOLD
+            5: self.handle_hold,
+            
             # "SUBSCRIPTION_IN_GRACE_PERIOD": ,
-            "SUBSCRIPTION_RESTARTED": self.handle_restart,
+            # 6:
+
+            # SUBSCRIPTION_RESTARTED
+            7: self.handle_restart,
+            
             # "SUBSCRIPTION_PRICE_CHANGE_CONFIRMED": ,
-            "SUBSCRIPTION_DEFERRED": self.handle_defer,
-            "SUBSCRIPTION_PAUSED": self.handle_pause ,
-            "SUBSCRIPTION_PAUSE_SCHEDULE_CHANGED": self.handle_pause_schedule_change,
-            "SUBSCRIPTION_REVOKED": self.handle_revoke,
-            "SUBSCRIPTION_EXPIRED": self.handle_expiration
+            # 8:
+            
+            # SUBSCRIPTION_DEFERRED
+            9: self.handle_defer,
+            
+            # SUBSCRIPTION_PAUSED
+            10: self.handle_pause ,
+            
+            # SUBSCRIPTION_PAUSE_SCHEDULE_CHANGED
+            11: self.handle_pause_schedule_change,
+            
+            # SUBSCRIPTION_REVOKED
+            12: self.handle_revoke,
+            
+            # SUBSCRIPTION_EXPIRED
+            13: self.handle_expiration
         }
 
     def validate_subscription(self, googleToken: str, current_user: schemas.User):
@@ -50,7 +75,9 @@ class GooglePlayService():
             self.db.refresh(subscription)
             # acknolwedge to the server
             return True
-        except:
+        except Exception as e:
+            print("VALIDATION FAILED")
+            print(e)
             return False
         
     def get_user_from_purchase_token(self, token):
