@@ -86,7 +86,7 @@ class GooglePlayService():
         
     def get_user_from_purchase_token(self, token):
         resp = self.get_subscription_from_play(token)
-        email = resp.emailAddress
+        email = resp["emailAddress"]
         user = self.db.query(User).filter(User.email == email)
 
         return user
