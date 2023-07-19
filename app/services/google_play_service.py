@@ -31,8 +31,8 @@ class GooglePlayService():
             # SUBSCRIPTION_ON_HOLD
             5: self.handle_hold,
             
-            # "SUBSCRIPTION_IN_GRACE_PERIOD": ,
-            # 6:
+            # SUBSCRIPTION_IN_GRACE_PERIOD
+            6: self.handle_grace_period,
 
             # SUBSCRIPTION_RESTARTED
             7: self.handle_restart,
@@ -104,7 +104,7 @@ class GooglePlayService():
         
         # assume that the renewal is right at the start of the new period
         user_sub.current_window_start_date = datetime.now()
-        user_sub.current_window_end_date = datetime.fromtimestamp(int(resp["expiryTimeMillis"]) // 1000) + timedelta(days=7)
+        user_sub.current_window_end_date = datetime.fromtimestamp(int(resp["expiryTimeMillis"]) // 1000)
 
         if user_sub.deleted_at:
             user_sub.deleted_at = None
@@ -118,7 +118,7 @@ class GooglePlayService():
         # of the current window
         user = self.get_user_from_purchase_token(notification["purchaseToken"])
         user_sub = user.active_subscriptions()[0]
-        user_sub.deleted_at = user_sub.current_window_end_date
+        user_sub.deleted_at = user_sub.current_window_end_date - timedelta(days=GRACE_PERIOD_DAYS)
 
         self.db.commit()
         
@@ -139,7 +139,7 @@ class GooglePlayService():
                 price_tier_id=price_tier.id,
                 google_token=notification["purchaseToken"],
                 current_window_start_date=datetime.now(),
-                current_window_end_date=datetime.fromtimestamp(int(resp["expiryTimeMillis"]) // 1000) + timedelta(days=GRACE_PERIOD_DAYS)
+                current_window_end_date=datetime.fromtimestamp(int(resp["expiryTimeMillis"]) // 1000)
             )
 
             self.db.add(subscription)
@@ -167,6 +167,14 @@ class GooglePlayService():
 
     def handle_pause_schedule_change(self, notification):
         pass
+
+    def handle_grace_period(self, notification):
+        user = self.get_user_from_purchase_token(notification["purchaseToken"])
+        user_sub = user.active_subscriptions()[0]
+        user_sub.current_window_end_date = datetime.now() + timedelta(days=GRACE_PERIOD_DAYS)
+        self.db.commit()
+
+        return True
 
     def handle_revoke(self, notification):
         user = self.get_user_from_purchase_token(notification["purchaseToken"])
