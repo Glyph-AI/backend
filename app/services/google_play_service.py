@@ -77,6 +77,9 @@ class GooglePlayService():
             self.db.add(subscription)
             self.db.commit()
             self.db.refresh(subscription)
+
+            current_user.is_current = True
+            self.db.commit()
             # acknolwedge to the server
             return True
         except Exception as e:
@@ -172,12 +175,17 @@ class GooglePlayService():
         user_sub = user.active_subscriptions[0]
         user_sub.deleted_at = datetime.now()
 
+        user.is_current = False
+
         self.db.commit()
         self.db.refresh(user_sub)
         return True
 
     def handle_expiration(self, notification):
+        user = self.get_user_from_purchase_token(notification["purchaseToken"])
         self.handle_cancel(notification)
+        user.is_current = False
+        self.db.commit()
         return True
         
     def handle_webhook(self, webhook_event):
