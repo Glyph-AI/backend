@@ -81,6 +81,7 @@ class GooglePlayService():
             current_user.is_current = True
             self.db.commit()
             # acknolwedge to the server
+            self.service.purchases().subscriptions().acknowledge(packageName=PACKAGE_NAME, subscriptionId=SUBSCRIPTION_ID, token=googleToken).execute()
             return True
         except Exception as e:
             print("VALIDATION FAILED")
@@ -98,7 +99,7 @@ class GooglePlayService():
     def handle_renewal(self, notification):
         # if a subscription renews, we just update the current_window start and end
         user = self.get_user_from_purchase_token(notification["purchaseToken"])
-        user_sub = user.active_subscriptions[0]
+        user_sub = user.active_subscriptions()[0]
         resp = self.get_subscription_from_play(notification["purchaseToken"])
         
         # assume that the renewal is right at the start of the new period
@@ -116,7 +117,7 @@ class GooglePlayService():
         # If a user cancelswe do nothing, we go ahead and add deleted_at to the subscription to match the end 
         # of the current window
         user = self.get_user_from_purchase_token(notification["purchaseToken"])
-        user_sub = user.active_subscriptions[0]
+        user_sub = user.active_subscriptions()[0]
         user_sub.deleted_at = user_sub.current_window_end_date
 
         self.db.commit()
@@ -169,7 +170,7 @@ class GooglePlayService():
 
     def handle_revoke(self, notification):
         user = self.get_user_from_purchase_token(notification["purchaseToken"])
-        user_sub = user.active_subscriptions[0]
+        user_sub = user.active_subscriptions()[0]
         user_sub.deleted_at = datetime.now()
 
         user.is_current = False
@@ -180,7 +181,7 @@ class GooglePlayService():
 
     def handle_expiration(self, notification):
         user = self.get_user_from_purchase_token(notification["purchaseToken"])
-        user_sub = user.active_subscriptions[0]
+        user_sub = user.active_subscriptions()[0]
         user_sub.deleted_at = datetime.now()
         user.is_current = False
         self.db.commit()
