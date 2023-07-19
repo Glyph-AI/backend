@@ -56,10 +56,14 @@ class GooglePlayService():
             13: self.handle_expiration
         }
 
+    def get_subscription_from_play(self, token):
+        resp = self.service.purchases().subscriptions().get(packageName=PACKAGE_NAME, subscriptionId=SUBSCRIPTION_ID, token=token).execute()
+        return resp
+
     def validate_subscription(self, googleToken: str, current_user: schemas.User):
         try:
             # verify purchase
-            resp = self.service.purchases().subscriptions().get(PACKAGE_NAME, SUBSCRIPTION_ID, googleToken)
+            resp = self.get_subscription_from_play(googleToken)
             # grant access by creating a subscription
             price_tier = self.db.query(PriceTier).filter(PriceTier.price == 499).first()
             subscription = Subscription(
@@ -81,7 +85,7 @@ class GooglePlayService():
             return False
         
     def get_user_from_purchase_token(self, token):
-        resp = self.service.purchases().subscriptions().get(PACKAGE_NAME, SUBSCRIPTION_ID, token)
+        resp = self.service.purchases().subscriptions().get(PACKAGE_NAME, SUBSCRIPTION_ID, token).execute()
         email = resp.emailAddress
         user = self.db.query(User).filter(User.email == email)
 
@@ -95,7 +99,7 @@ class GooglePlayService():
         # if a subscription renews, we just update the current_window start and end
         user = self.get_user_from_purchase_token(notification["purchaseToken"])
         user_sub = user.active_subscriptions[0]
-        resp = self.service.purchases().subscriptions().get(PACKAGE_NAME, SUBSCRIPTION_ID, notification["purchaseToken"])
+        resp = self.get_subscription_from_play(notification["purchaseToken"])
         
         # assume that the renewal is right at the start of the new period
         user_sub.current_window_start_date = datetime.now()
@@ -125,7 +129,7 @@ class GooglePlayService():
         sub = self.db.query(Subscription).filter(Subscription.google_token == notification["purchaseToken"]).first()
         # if we don't have one we should go ahead and create one
         if not sub:
-            resp = self.service.purchases().subscriptions().get(PACKAGE_NAME, SUBSCRIPTION_ID, notification["purchaseToken"])
+            resp = self.get_subscription_from_play(notification["purchaseToken"])
             # grant access by creating a subscription
             price_tier = self.db.query(PriceTier).filter(PriceTier.price == 499).first()
             user = self.get_user_from_purchase_token(notification["purchaseToken"])
