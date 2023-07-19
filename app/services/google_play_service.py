@@ -13,7 +13,7 @@ GRACE_PERIOD_DAYS = 7
 
 class GooglePlayService():
     def __init__(self, db: Session):
-        # self.service = build('androidpublisher', 'v3')
+        self.service = build('androidpublisher', 'v3')
         self.db = db
         self.webhook_method_map = {
             # SUBSCRIPTION_RECOVERED
