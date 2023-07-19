@@ -71,7 +71,7 @@ class GooglePlayService():
                 price_tier_id=price_tier.id,
                 google_token=googleToken,
                 current_window_start_date=datetime.now(),
-                current_window_end_date=datetime.fromtimestamp(int(resp["expiryTimeMillis"]) // 1000)
+                current_window_end_date=datetime.fromtimestamp(int(resp["expiryTimeMillis"]) // 1000) + timedelta(days=GRACE_PERIOD_DAYS)
             )
 
             self.db.add(subscription)
@@ -141,7 +141,7 @@ class GooglePlayService():
                 price_tier_id=price_tier.id,
                 google_token=notification["purchaseToken"],
                 current_window_start_date=datetime.now(),
-                current_window_end_date=datetime.fromtimestamp(int(resp["expiryTimeMillis"]) // 1000) + timedelta(days=7)
+                current_window_end_date=datetime.fromtimestamp(int(resp["expiryTimeMillis"]) // 1000) + timedelta(days=GRACE_PERIOD_DAYS)
             )
 
             self.db.add(subscription)
@@ -183,7 +183,8 @@ class GooglePlayService():
 
     def handle_expiration(self, notification):
         user = self.get_user_from_purchase_token(notification["purchaseToken"])
-        self.handle_cancel(notification)
+        user_sub = user.active_subscriptions[0]
+        user_sub.deleted_at = datetime.now()
         user.is_current = False
         self.db.commit()
         return True
