@@ -199,5 +199,9 @@ class GooglePlayService():
             method = self.webhook_method_map[notification["notificationType"]]
             return method(notification)
 
-        except KeyError:
+        except KeyError as ke:
+            print(ke)
+            return True
+        except Exception as e:
+            print(e)
             return True
