@@ -6,3 +6,4 @@ from .user_upload import *
 from .persona import *
 from .tool import *
 from .text import *
+from .subscription import *

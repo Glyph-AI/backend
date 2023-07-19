@@ -8,7 +8,7 @@ from enum import Enum
 
 from app.dependencies import get_db, get_current_user
 from app.models import PriceTier, Subscription
-from app.schemas import User
+from app.schemas import User, GoogleAcknolwedgement
 from app.services import StripeService, GooglePlayService
 
 subscriptions_router = APIRouter(tags=["Subscriptions API"])
@@ -48,9 +48,9 @@ async def webhook_receive(request: Request, stripe_signature: str = Header(None)
     return JSONResponse(content={"status": "success"})
 
 @subscriptions_router.post("/google-verification")
-async def verify_google_purchase(googleToken: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def verify_google_purchase(data: GoogleAcknolwedgement, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     gps = GooglePlayService(db)
-    return {"success": gps.validate_subscription(googleToken, current_user)} 
+    return {"success": gps.validate_subscription(data.googleToken, current_user)} 
     
 @subscriptions_router.post("/google-webhook")
 async def google_webhook(webhook_event: dict, db: Session = Depends(get_db)):
