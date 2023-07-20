@@ -52,6 +52,7 @@ class User(UserBase):
     subscription_canceled: bool
     is_current: bool
     notifications: bool | None = None
+    subscription_provider: str | None = None
 
     class Config:
         orm_mode = True

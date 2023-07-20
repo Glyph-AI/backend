@@ -1,12 +1,15 @@
 from fastapi import APIRouter, Depends, Request, Header
 from fastapi.responses import JSONResponse
+from apiclient.discovery import build
 from sqlalchemy.orm import Session
+from datetime import datetime
 import os
 from enum import Enum
 
 from app.dependencies import get_db, get_current_user
-from app.schemas import User
-from app.services import StripeService
+from app.models import PriceTier, Subscription
+from app.schemas import User, GoogleAcknolwedgement
+from app.services import StripeService, GooglePlayService
 
 subscriptions_router = APIRouter(tags=["Subscriptions API"])
 
@@ -43,3 +46,13 @@ async def webhook_receive(request: Request, stripe_signature: str = Header(None)
     stripe_svc.handle_webhook(stripe_data, stripe_signature)
 
     return JSONResponse(content={"status": "success"})
+
+@subscriptions_router.post("/google-verification")
+async def verify_google_purchase(data: GoogleAcknolwedgement, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    gps = GooglePlayService(db)
+    return {"success": gps.validate_subscription(data.googleToken, current_user)} 
+    
+@subscriptions_router.post("/google-webhook")
+async def google_webhook(webhook_event: dict, db: Session = Depends(get_db)):
+    gps = GooglePlayService(db)
+    return gps.handle_webhook(webhook_event)
