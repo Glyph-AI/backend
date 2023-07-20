@@ -200,6 +200,10 @@ class GooglePlayService():
         print(base64.b64decode(webhook_event["message"]["data"]).decode('utf-8'))
         event = json.loads(base64.b64decode(webhook_event["message"]["data"]).decode('utf-8'))
         
+        if "subscriptionNotification" not in event:
+            print("Not a subscription notification. Acking to the queue.")
+            return True
+        
         notification = event["subscriptionNotification"]
         try:
             method = self.webhook_method_map[notification["notificationType"]]
