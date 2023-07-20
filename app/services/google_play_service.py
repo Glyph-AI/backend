@@ -189,8 +189,10 @@ class GooglePlayService():
 
     def handle_expiration(self, notification):
         user = self.get_user_from_purchase_token(notification["purchaseToken"])
-        user_sub = user.active_subscriptions()[0]
-        user_sub.deleted_at = datetime.now()
+        if len(user.active_subscriptions()) > 0:
+            user_sub = user.active_subscriptions()[0]
+            user_sub.deleted_at = datetime.now()
+        
         user.is_current = False
         self.db.commit()
         return True
