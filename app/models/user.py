@@ -186,6 +186,16 @@ class User(Base):
     @property
     def can_create_files(self):
         return self.subscription_in_good_standing or self.files_left > 0
+    
+    @property
+    def subscription_provider(self):
+        if len(self.active_subscriptions()) == 0:
+            return None
+        
+        if self.active_subscriptions()[0].is_google:
+            return "Google"
+
+        return "Stripe"
 
     @property
     def subscription_canceled(self):
