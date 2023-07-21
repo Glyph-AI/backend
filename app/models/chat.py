@@ -21,6 +21,7 @@ class Chat(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     bot_id = Column(Integer, ForeignKey("bots.id"))
     deleted = Column(Boolean, default=False)
+    tags = Column(String, default="")
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
 

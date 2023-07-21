@@ -9,7 +9,7 @@ from difflib import SequenceMatcher
 import numpy as np
 
 from app.prompts import *
-from app.models import UserUpload, Text, Embedding, ChatMessage, ChatgptLog, Bot
+from app.models import UserUpload, Text, Embedding, ChatMessage, ChatgptLog, Bot, Chat
 from .openai_service import OpenaiService
 from .sentence_transformer_service import SentenceTransformerService
 
@@ -106,22 +106,45 @@ class Glyph:
             ChatMessage.chat_id == self.chat_id
         ).order_by(
             ChatMessage.created_at.desc()
-        ).offset(
-            self.message_history_to_include
         ).all()
 
         unarchived_chars = sum([len(i.content) for i in unarchived])
 
+        print("-" * 80)
+        print(unarchived_chars)
+        print("-" * 80)
+
         if unarchived_chars > self.history_threshold:
             self.embed_message_history(unarchived)
 
-    def embed_message_history(self, message_list):
+    def tag_conversation(self, messages):
+        chat = self.db.query(Chat).filter(Chat.id == self.chat_id).first()
+        print("TAGGING CONVERSATION")
+        prompt = tagging_prompt.format(
+            message_history=messages,
+            current_tags=chat.tags
+        )
 
+        query_object = self.openai.query_object(content=prompt, role="user")
+        resp = self.openai.query_model([query_object])
+
+        if chat.tags:
+            chat.tags += resp
+        else:
+            chat.tags = resp
+        self.db.commit()
+
+        return True
+
+    def embed_message_history(self, message_list):
         message_texts = [i.format_archive() for i in message_list]
 
         combined_text = "\n".join(message_texts)
 
-        # chunk if necessar
+        # tag the chat
+        self.tag_conversation(combined_text)
+
+        # chunk if necessary
         chunk_size = 1000
         overlap = 250
         chunks = [combined_text[i:i + chunk_size]
