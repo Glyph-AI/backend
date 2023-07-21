@@ -95,8 +95,6 @@ async def create_user(user_create_data: UserCreate, db: Session = Depends(get_db
 async def login_user(user_login_info: UserLogin, db: Session = Depends(get_db)):
     possible_user = db.query(models.User).filter(
         models.User.email == user_login_info.email.lower()).first()
-    print("-" * 80)
-    print(possible_user)
     if possible_user is None:
         raise Errors.login_error
 
