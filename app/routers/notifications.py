@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 from app.dependencies import get_db, get_current_user
 from app.schemas import User, UserDeviceBase, UserDevice
@@ -13,6 +14,7 @@ def create_user_device(device: UserDeviceBase, db: Session=Depends(get_db)):
     user_device = db.query(models.UserDevice).filter(models.UserDevice.device_token == device.device_token).first()
 
     if user_device:
+        user_device.last_used = datetime.now()
         return user_device
     
     new_user_device = models.UserDevice(

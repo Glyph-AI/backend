@@ -6,6 +6,7 @@ from sqlalchemy.sql import func
 from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm.session import object_session
 from dateutil.relativedelta import relativedelta
+from operator import attrgetter
 import bcrypt
 
 from app.db.base_class import Base
@@ -53,6 +54,10 @@ class User(Base):
         # max password length of 72. Make sure we acknowledge this
         self._password = bcrypt.hashpw(plaintext.encode(
             "utf-8"), bcrypt.gensalt()).decode("utf-8")
+        
+    @property
+    def last_used_device(self):
+        return max(self.devices, key=attrgetter('last_used'))
 
     def check_password(self, plaintext):
         return bcrypt.checkpw(plaintext.encode("utf-8"), self._password.encode("utf-8"))

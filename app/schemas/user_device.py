@@ -4,11 +4,11 @@ from datetime import datetime
 class UserDeviceBase(BaseModel):
     device_token: str
     user_id: int
+    last_used: datetime
 
 class UserDevice(UserDeviceBase):
     id: int
-    user_id: int
-    device_token: str
+    created_at: datetime
 
     class Config:
         orm_mode = True
