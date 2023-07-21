@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import List
 from typing import Optional
 from datetime import datetime
+from .user_device import UserDevice
 
 
 class GoogleAuth(BaseModel):
@@ -53,6 +54,7 @@ class User(UserBase):
     is_current: bool
     notifications: bool | None = None
     subscription_provider: str | None = None
+    devices: list[UserDevice]
 
     class Config:
         orm_mode = True

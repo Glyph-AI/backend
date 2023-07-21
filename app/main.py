@@ -47,6 +47,7 @@ def create_app():
     app.include_router(personas_router)
     app.include_router(tools_router)
     app.include_router(texts_router)
+    app.include_router(notifications_router)
     public_app.include_router(public_router)
 
     app.mount(path="/api/v1", app=public_app)
