@@ -19,7 +19,8 @@ def create_user_device(device: UserDeviceBase, db: Session=Depends(get_db)):
     
     new_user_device = models.UserDevice(
         device_token=device.device_token,
-        user_id=device.user_id
+        user_id=device.user_id,
+        last_used=datetime.now()
     )
 
     db.add(new_user_device)
