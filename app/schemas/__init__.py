@@ -7,3 +7,4 @@ from .persona import *
 from .tool import *
 from .text import *
 from .subscription import *
+from .user_device import *

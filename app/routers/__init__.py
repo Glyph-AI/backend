@@ -7,3 +7,4 @@ from .personas import personas_router
 from .tools import tools_router
 from .texts import texts_router
 from .public import public_router
+from .notifications import notifications_router
