@@ -54,7 +54,7 @@ class User(UserBase):
     is_current: bool
     notifications: bool | None = None
     subscription_provider: str | None = None
-    last_used_device: UserDevice
+    last_used_device: UserDevice | None = None
 
     class Config:
         orm_mode = True

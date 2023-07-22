@@ -57,7 +57,10 @@ class User(Base):
         
     @property
     def last_used_device(self):
-        return max(self.devices, key=attrgetter('last_used'))
+        if len(self.devices) > 0:
+            return max(self.devices, key=attrgetter('last_used'))
+        
+        return None
 
     def check_password(self, plaintext):
         return bcrypt.checkpw(plaintext.encode("utf-8"), self._password.encode("utf-8"))
