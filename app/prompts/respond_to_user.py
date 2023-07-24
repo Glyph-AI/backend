@@ -1,5 +1,5 @@
 respond_to_user_prompt = """
-Based on the responses from tools, and the plan above respond to the user's initial request:
+Based on the responses from tools, and the plan above respond to the user's initial request{tts_tag}:
 
 USER INPUT: {user_input}
 

@@ -7,3 +7,4 @@ from .stripe_service import StripeService
 from .openai_service import OpenaiService
 from .sentence_transformer_service import SentenceTransformerService
 from .google_play_service import GooglePlayService
+from .google_tts_service import GoogleTtsService

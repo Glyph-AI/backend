@@ -18,7 +18,7 @@ openai.api_key = os.environ.get(
 
 
 class Glyph:
-    def __init__(self, db: Session, bot_id: int, chat_id: int, user_id: int):
+    def __init__(self, db: Session, bot_id: int, chat_id: int, user_id: int, tts: bool = False):
         self.db = db
         self.bot_id = bot_id
         self.chat_id = chat_id
@@ -31,6 +31,7 @@ class Glyph:
         self.openai = OpenaiService(self.db, self.chat_id)
         self.transformer_service = SentenceTransformerService()
         self.user_message = ""
+        self.tts = tts
 
     def __initial_tools(self):
         # for now force it to do something if Document Search is actually present in the tool list
