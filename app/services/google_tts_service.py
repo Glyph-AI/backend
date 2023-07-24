@@ -1,6 +1,4 @@
 import google.cloud.texttospeech as tts
-from datetime import datetime
-import soundfile
 
 
 class GoogleTtsService:
