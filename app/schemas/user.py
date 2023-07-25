@@ -55,7 +55,7 @@ class User(UserBase):
     notifications: bool | None = None
     subscription_provider: str | None = None
     last_used_device: UserDevice | None = None
-    conversation_mode: bool | None = False
+    conversation_mode: bool
 
     class Config:
         orm_mode = True
