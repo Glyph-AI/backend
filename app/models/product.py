@@ -4,6 +4,7 @@ from sqlalchemy.sql import func
 
 from app.db.base_class import Base
 
+
 class Product(Base):
     __tablename__ = "products"
 
@@ -12,7 +13,9 @@ class Product(Base):
     message_limit = Column(Integer, nullable=False)
     bot_limit = Column(Integer, nullable=False)
     text_limit = Column(Integer, nullable=False)
+    conversation_mode = Column(
+        Integer, nullable=False, default=-1, server_default="-1")
     created_at = Column(DateTime(timezone=True),
-                server_default=func.now())
-    
+                        server_default=func.now())
+
     price_tiers = relationship("PriceTier", back_populates="product")

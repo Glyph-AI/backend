@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, Response
 from fastapi.encoders import jsonable_encoder
 import asyncio
 from sqlalchemy.orm import Session
@@ -12,7 +12,7 @@ from app.schemas import ChatBase, Chat, User, ChatMessageCreate, ChatCreate, Cha
 from app.crud import chat as chat_crud
 from app.crud import user as user_crud
 from app.errors import Errors
-from app.services import Glyph
+from app.services import Glyph, GoogleTtsService
 import app.models as models
 
 
@@ -67,6 +67,7 @@ def get_chats_by_user_id(db: Session = Depends(get_db), current_user: User = Dep
 def create_chat(chat_data: ChatCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return chat_crud.create_chat(chat_data, db, current_user)
 
+
 @chats_router.delete("/{chat_id}")
 def delete_chats(chat_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return chat_crud.delete_chat_by_id(chat_id, db, current_user)
@@ -89,7 +90,7 @@ def send_message(message_data: ChatMessageCreate, chat_id: int, db: Session = De
     print("GLYPH PROCESSING COMPLETE")
 
     responseJson = ChatMessageCreate(
-        **{"content": response, "role": "assistant", "chat_id": chat_id}
+        **{"content": response, "role": "assistant", "chat_id": chat_id, "tts": message_data.tts}
     )
 
     responseJson = handle_message_creation(
@@ -97,6 +98,17 @@ def send_message(message_data: ChatMessageCreate, chat_id: int, db: Session = De
     )
 
     return responseJson
+
+
+@chats_router.get("/{chat_id}/message/{message_id}/tts")
+def handle_tts(message_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # handle user access here
+    message_data = db.query(models.ChatMessage).filter(
+        models.ChatMessage.id == message_id).first()
+    tts_service = GoogleTtsService()
+    headers = {"Content-Disposition": "inline; filename='output.wav'"}
+    return Response(tts_service.text_to_wav(message_data.content), headers=headers, media_type="audio/wav")
+
 
 @chats_router.get("/{chat_id}", response_model=Chat)
 def get_all_messages_for_chat(chat_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):

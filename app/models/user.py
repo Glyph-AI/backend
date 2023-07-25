@@ -54,13 +54,23 @@ class User(Base):
         # max password length of 72. Make sure we acknowledge this
         self._password = bcrypt.hashpw(plaintext.encode(
             "utf-8"), bcrypt.gensalt()).decode("utf-8")
-        
+
     @property
     def last_used_device(self):
         if len(self.devices) > 0:
             return max(self.devices, key=attrgetter('last_used'))
-        
+
         return None
+
+    @property
+    def conversation_mode(self):
+        if len(self.active_subscriptions()) > 0:
+            sub = self.active_subscriptions()[0]
+            if sub.price_tier.product.conversation_mode >= 0:
+                return True
+            return False
+
+        return False
 
     def check_password(self, plaintext):
         return bcrypt.checkpw(plaintext.encode("utf-8"), self._password.encode("utf-8"))
@@ -169,7 +179,6 @@ class User(Base):
             bots_limit = active_subscription.price_tier.product.bot_limit
             return bots_limit
 
-
         return FREEMIUM_BOTS
 
     @property
@@ -195,12 +204,12 @@ class User(Base):
     @property
     def can_create_files(self):
         return self.subscription_in_good_standing or self.files_left > 0
-    
+
     @property
     def subscription_provider(self):
         if len(self.active_subscriptions()) == 0:
             return None
-        
+
         if self.active_subscriptions()[0].is_google:
             return "Google"
 

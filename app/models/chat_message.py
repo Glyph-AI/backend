@@ -14,6 +14,7 @@ class ChatMessage(Base):
     content = Column(Text, nullable=False)
     hidden = Column(Boolean, default=False)
     archived = Column(Boolean, default=False)
+    tts = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
 
