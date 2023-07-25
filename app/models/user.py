@@ -63,7 +63,7 @@ class User(Base):
         return None
 
     @property
-    def has_conversation_mode(self):
+    def conversation_mode(self):
         if len(self.active_subcriptions()) > 0:
             sub = self.active_subscriptions()[0]
             if sub.price_tier.product.conversation_mode >= 0:
