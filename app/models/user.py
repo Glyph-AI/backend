@@ -62,6 +62,16 @@ class User(Base):
 
         return None
 
+    @property
+    def has_conversation_mode(self):
+        if len(self.active_subcriptions()) > 0:
+            sub = self.active_subscriptions()[0]
+            if sub.price_tier.product.conversation_mode >= 0:
+                return True
+            return False
+
+        return False
+
     def check_password(self, plaintext):
         return bcrypt.checkpw(plaintext.encode("utf-8"), self._password.encode("utf-8"))
 

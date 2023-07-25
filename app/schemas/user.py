@@ -55,6 +55,7 @@ class User(UserBase):
     notifications: bool | None = None
     subscription_provider: str | None = None
     last_used_device: UserDevice | None = None
+    conversation_mode: bool | None = False
 
     class Config:
         orm_mode = True
@@ -75,6 +76,7 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: str | None = None
+
 
 class BotTokenData(BaseModel):
     id: int

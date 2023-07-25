@@ -83,7 +83,7 @@ class StripeService():
 
             user = self.db.query(User).filter_by(
                 stripe_customer_id=customer_id).first()
-            
+
             # handle user subscribing from the website not from the app
             if not user:
                 customer_email = event['data']['object']['customer_email']
@@ -145,7 +145,7 @@ class StripeService():
         if event_type == "product.updated":
             p = self.db.query(Product).filter_by(
                 id=event["data"]["object"]["id"]).first()
-            
+
             event_object = event["data"]["object"]
 
             if not p:
@@ -155,18 +155,19 @@ class StripeService():
                 p.bot_limit = event_object["metadata"]["bot_limit"]
                 p.text_limit = event_object["metadata"]["text_limit"]
                 p.name = event_object["name"]
+                p.conversation_mode = event_object["metadata"]["conversation_mode"]
 
                 self.db.commit()
         # handle product deletion
-        if event_type == "product.deleted": 
+        if event_type == "product.deleted":
             p = self.db.query(Product).filter_by(
                 id=event["data"]["object"]["id"]).first()
-            
+
             event_object = event["data"]["object"]
 
             if p:
                 self.db.delete(p)
-                
+
         # handle price creation
         if event_type == 'price.created':
             event_object = event["data"]["object"]
@@ -239,14 +240,15 @@ class StripeService():
         self.db.refresh(pt)
 
         return pt
-    
+
     def create_product(self, event_object):
         p = Product(
             id=event_object["id"],
             name=event_object["name"],
             message_limit=event_object["metadata"]["message_limit"],
             bot_limit=event_object["metadata"]["bot_limit"],
-            text_limit=event_object["metadata"]["text_limit"]
+            text_limit=event_object["metadata"]["text_limit"],
+            conversation_mode=event_object["metadata"]["conversation_mode"]
         )
 
         self.db.add(p)
