@@ -15,6 +15,7 @@ def create_user_device(device: UserDeviceBase, db: Session=Depends(get_db)):
 
     if user_device:
         user_device.last_used = datetime.now()
+        db.commit()
         return user_device
     
     new_user_device = models.UserDevice(
