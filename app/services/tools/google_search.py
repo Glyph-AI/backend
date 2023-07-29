@@ -22,7 +22,9 @@ class GoogleSearch(BaseTool):
         return "\n\n".join(formatted_strings)
 
     def __get_results(self, search_query):
+        print(self.__url(search_query))
         raw = requests.get(self.__url(search_query)).json()["items"]
+        print([i.keys() for i in raw])
         array_results = [
             {"url": i['link'], "description": i["snippet"], "title": i['title']} for i in raw][:7]
         return array_results
