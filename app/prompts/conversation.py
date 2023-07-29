@@ -5,13 +5,9 @@ CURRENT_DATE: {current_date}
 
 TOOLS: {tools}
 
-This is the response from the {action} tool.
+Observation: {tool_response}
 
-TOOL_RESPONSE: 
----
-{tool_response}
----
 
-Based on your list, and last action, and the response from the tool please respond with an action, action_input pair for the next action.
+Based on your observation and last action please respond with a thought, action, action_input for the next action.
 
 """

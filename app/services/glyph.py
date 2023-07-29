@@ -44,29 +44,18 @@ class Glyph:
         try:
             self.archive()
             self.user_message = user_message
-            prompt = self.format_base_prompt(
-                user_message, self.__initial_tools())
+            prompt = self.format_base_prompt(self.__initial_tools(), self.user_message)
             initial_obj = self.openai.query_object(prompt)
             internal_message_array = [initial_obj]
-            list_response = self.openai.query_model(internal_message_array)
-            print("-" * 80)
-            print(list_response)
-            print("-" * 80)
-            list_response = self.openai.query_object(
-                list_response, role="assistant")
-            internal_message_array.append(list_response)
-            followup = self.openai.query_object(followup_prompt)
-            internal_message_array.append(followup)
             chatgpt_response = self.openai.query_model(internal_message_array)
-            chatgpt_response_obj = self.openai.query_object(
-                chatgpt_response, role="assistant")
+            chatgpt_response_obj = self.openai.query_object(chatgpt_response, role="assistant")
             internal_message_array.append(chatgpt_response_obj)
+            print("-" * 80)
+            print(chatgpt_response)
+            print("-" * 80)
 
             iter = 0
             while True:
-                print("-" * 80)
-                print(chatgpt_response)
-                print("-" * 80)
                 action_taken, glyph_response, respond_direct = self.handle_response(
                     chatgpt_response, internal_message_array)
 
@@ -81,7 +70,7 @@ class Glyph:
                     return "Max Internal Iterations Reached"
 
                 prompt = self.format_conversation_prompt(
-                    tool_response=glyph_response, action=action_taken, tools=[i.format() for i in self.tools])
+                    tool_response=glyph_response, tools=[i.format() for i in self.tools])
 
                 obj = self.openai.query_object(prompt)
                 internal_message_array.append(obj)
@@ -264,29 +253,26 @@ class Glyph:
 
         return joined_messages
 
-    def format_base_prompt(self, user_message: str, allowed_tools: list[dict]):
+    def format_base_prompt(self, allowed_tools, user_message):
         chat_history = self.get_last_n_messages(
             self.message_history_to_include)
         prompt = base_prompt.format(
-            tools=allowed_tools,
+            bot_name=self.bot.name,
+            current_date=datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
             persona_prompt=self.bot.persona.prompt,
-            user_input=user_message,
+            tools=allowed_tools,
             chat_history=chat_history,
-            current_date=datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+            user_input=user_message,
         )
 
         return prompt
 
-    def format_conversation_prompt(self, tool_response: str, action: str, tools: list[dict]):
-        chat_history = self.get_last_n_messages(
-            self.message_history_to_include)
-
+    def format_conversation_prompt(self, tool_response: str, tools: list[dict]):
         prompt = conversation_prompt.format(
             persona_prompt=self.bot.persona.prompt,
-            tool_response=tool_response,
-            action=action,
+            current_date=datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
             tools=tools,
-            current_date=datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+            tool_response=tool_response
         )
 
         return prompt

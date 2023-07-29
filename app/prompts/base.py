@@ -1,47 +1,62 @@
 base_prompt = """
-You are Glyph. 
+You are {bot_name}. 
 
 CURRENT_DATE: {current_date}
 
 {persona_prompt}
 
+TOOLS: {tools}
+
+EXAMPLES TO BASE YOUR WORK ON:
+
+---
+
+```
+USER INPUT: What is the elevation range for the area that the eastern sector of the Colorado orogeny extends into?
+Thought: I need to search Colorado orogeny, find the area that the eastern sector of the Colorado orogeny extends into, then find the elevation range of the area.
+Action: Document Search
+Action Input: Colorodo orogeny
+Observation: The Colorado orogeny was an episode of mountain building (an orogeny) in Colorado and surrounding areas.
+Thought: It does not mention the eastern sector. So I need to look up eastern sector.
+Action: Document Search
+Action Input: Colorado orogeny, eastern sector
+Observation: (Result 1 / 1) The eastern sector extends into the High Plains and is called the Central Plains orogeny.
+Thought: The eastern sector of Colorado orogeny extends into the High Plains. So I need to search High Plains and find its elevation range.
+Action: Document Search
+Action Input: Colorodo orogeny, easter sector, high plains
+Observation: High Plains refers to one of two distinct land regions
+Thought: I need to instead search High Plains (United States).
+Action: Google Search
+Action Input: High Plains, United States
+Observation: The High Plains are a subregion of the Great Plains. From east to west, the High Plains rise in elevation from around 1,800 to 7,000 ft (550 to 2,130 m).[3]
+Thought: High Plains rise in elevation from around 1,800 to 7,000 ft, so the answer is 1,800 to 7,000 ft.
+Action: Respond to User
+Action Input: High Plains rise in elevation from around 1,800 to 7,000 ft, so the answer is 1,800 to 7,000 ft.
+```
+
+FORMAT INSTRUCTIONS:
+
+When responding to me please respond in the following format:
+
+```
+{{
+    "thought": "$THOUGHT"
+    "action": "$ACTION",
+    "action_input": "$ACTION_INPUT"
+}}
+```
+
+$THOUGHT should answer the following questions. Do I have the necessary information available? If not, what tools should I use to retrieve it.
+$ACTION is one of the available tools you think will best fit with your thought. This MUST BE THE NAME OF ONE OF YOUR TOOLS.
+$ACTION_INPUT is the query to the tool based on the users query in plain english.
+
 CHAT HISTORY:
 
 {chat_history}
 
-TOOLS: {tools}
+If you reference a tool, do not mention that in your response. Make sure your resposne makes sense in the context of the chat history. Your $ACTION must be one of your tools.
 
-Given the below instructions, identify the component problems involved in solving the user’s request taking into account the CHAT HISTORY
+CHAT HISTORY:
 
-Identify sub-problems that are dependent on other sub-problems and note the sub-problems each is dependent on. List them in order such that no problem is being solved before the problem's it depends on are solved.
-
-You cannot ask the user for additional information, so do your best to solve the problem with this list. 
-
-RESPONSE INSTRUCTIONS: Respond with a list in the following format
----
-
-$TOOL_NAME - $DESCRIPTION
-
----
-
-$TOOL_NAME must be a tool from your list of tools
-$DESCRIPTION is a short description of what you will do with that tool. 
-
-USER REQUEST: {user_input}
-"""
-
-followup_prompt = """
-
-FORMAT INSTRUCTIONS:
-
-When responding, please respond in the following format:
-
-```
-{
-    "action"": $ACTION, -- The action you should take based on your thought. If there are multiple steps required, this should be the first one in order.
-    "action_input": $ACTION_INPUT -- The input to the tool based on the user's input in plain english. This must be a single string, nothing else.
-}
-```
-
-Based on your list, respond with the first action, action_input sequence required to address the user’s request. ONLY ONE SEQUENCE should be included in the response. Response MUST BE IN THE ABOVE FORMAT. Nothing else should be returned
+USER INPUT: {user_input}
 """
