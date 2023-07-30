@@ -4,7 +4,7 @@ import chardet
 import os
 from app.models import UserUpload, Embedding, Text, ChatMessage, Embedding
 from app.dependencies import get_db
-from app.services import S3Service, PdfProcessor, ImageProcessor, AudioProcessor, SentenceTransformerService
+from app.services import S3Service, PdfProcessor, DocxProcessor, ImageProcessor, AudioProcessor, SentenceTransformerService
 
 
 celery = Celery(__name__)
@@ -86,6 +86,9 @@ def process_file(user_upload_id, chat_id):
         local_path = processor.process(local_path)
     elif file_extension in ["jpg", "png", "tiff"]:
         processor = ImageProcessor()
+        local_path = processor.process(local_path)
+    elif file_extension in ["docx"]:
+        processor = DocxProcessor()
         local_path = processor.process(local_path)
     elif file_extension == "mp3":
         processor = AudioProcessor()
