@@ -2,10 +2,11 @@ from fastapi import APIRouter, Depends, UploadFile, BackgroundTasks
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 import os
+from pydantic import BaseModel
 
 from app.dependencies import get_db, get_current_user
 # from app.models import UserUpload
-from app.schemas import User, ChatMessageCreateHidden, UserUpload
+from app.schemas import User, ChatMessageCreateHidden, UserUpload, ArchiveUrl
 from app.crud import user_upload as user_upload_crud
 from app.crud import chat_message as chat_message_crud
 from app.worker import process_file
@@ -17,10 +18,14 @@ user_uploads_router = APIRouter(
 
 # ALLOWED_FILE_EXTENSIONS = ["txt"]
 
+class UrlArchiveResponse(BaseModel):
+    success: bool
+    message: str
+
+
 
 def get_file_extension(filename):
     return filename.rsplit('.', 1)[1].lower()
-
 
 def process_file_upload(upload_file_record: UserUpload):
     pass
@@ -48,6 +53,13 @@ def upload_file(bot_id: int, file: UploadFile, chat_id: int = None, db: Session 
         task_id = process_file.delay(upload_file_record.id, chat_id).id
 
     return JSONResponse({"task_id": task_id})
+
+@user_uploads_router.post("/bots/{bot_id}/archive_url", response_model=UrlArchiveResponse)
+def upload_file(bot_id: int, urlObject: ArchiveUrl,  db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # get the url
+    url = urlObject.url
+    return user_upload_crud.handle_url_archive(url, db, current_user)
+
 
 
 @user_uploads_router.get("/user_uploads", response_model=list[UserUpload])

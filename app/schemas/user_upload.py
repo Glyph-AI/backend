@@ -11,3 +11,6 @@ class UserUpload(BaseModel):
 
     class Config:
         orm_mode = True
+
+class ArchiveUrl(BaseModel):
+    url: str

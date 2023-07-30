@@ -5,6 +5,10 @@ from app.models import UserUpload, Embedding, Text
 import app.schemas as schemas
 from app.services import S3Service
 from app.errors import Errors
+import requests
+from bs4 import BeautifulSoup
+from bs4.element import Comment
+
 
 
 def get_user_uploads(db: Session, current_user: schemas.User):
@@ -75,3 +79,39 @@ def update_context_status(id: int, db: Session, current_user: schemas.User):
     db.commit()
 
     return get_user_uploads(db, current_user)
+
+def tag_visible(element):
+    if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
+        return False
+    if isinstance(element, Comment):
+        return False
+    return True
+
+def handle_url_archive(url: str, db: Session, current_user: schemas.User):
+    resp = requests.get(url)
+    content_type = resp.headers['Content-Type']
+    text_content = None
+    if "html" in content_type:
+        content = resp.text
+        soup = BeautifulSoup(content, 'html.parser')
+        texts = soup.findAll(text=True)
+        visible = filter(tag_visible, texts)
+        text_content = " ".join(t.strip() for t in visible)
+    elif "text" in content_type:
+        text_content = resp.text
+    else:
+        return { "success": False, "message": "URL Type not supported"}
+    
+    new_text = Text(
+        user_id=current_user.id,
+        name=url,
+        content=text_content,
+    )
+
+    db.add(new_text)
+    db.commit()
+    db.refresh(new_text)
+
+    new_text.refresh_embeddings()
+
+    return {"success": True, "message": "Archive Successful"}

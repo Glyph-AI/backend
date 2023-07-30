@@ -21,7 +21,6 @@ openai.api_key = os.environ.get(
 def get_file_extension(filename):
     return filename.rsplit('.', 1)[1].lower()
 
-
 @celery.task(name="update_embeddings")
 def update_embeddings():
     db = next(get_db())
