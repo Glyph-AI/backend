@@ -44,7 +44,7 @@ def create_tutorial_setup(db, db_user):
     db.add(b_tool)
     db.commit()
     # create chat
-    new_chat = schemas.ChatCreate(name="Peronal Chef", bot_id=db_bot.id)
+    new_chat = schemas.ChatCreate(name="Personal Chef", bot_id=db_bot.id)
     create_chat(new_chat, db, db_user)
 
     return True
