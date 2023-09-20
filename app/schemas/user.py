@@ -3,6 +3,7 @@ from typing import List
 from typing import Optional
 from datetime import datetime
 from .user_device import UserDevice
+from .price_tier import PriceTier
 
 
 class GoogleAuth(BaseModel):
@@ -54,6 +55,8 @@ class User(UserBase):
     is_current: bool
     notifications: bool | None = None
     subscription_provider: str | None = None
+    subscription_price_tier: PriceTier | None = None
+    subscription_renewal_date: datetime | None = None
     last_used_device: UserDevice | None = None
     conversation_mode: bool
 

@@ -80,6 +80,16 @@ class User(Base):
         return len(self.active_subscriptions()) > 0
 
     @property
+    def subscription_price_tier(self):
+        if self.subscribed:
+            return self.active_subscriptions()[0].price_tier
+
+    @property
+    def subscription_renewal_date(self):
+        if self.subscribed:
+            return self.active_subscriptions()[0].current_window_end_date
+
+    @property
     def subscription_in_good_standing(self):
         return self.subscribed and self.is_current
 

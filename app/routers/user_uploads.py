@@ -18,21 +18,22 @@ user_uploads_router = APIRouter(
 
 # ALLOWED_FILE_EXTENSIONS = ["txt"]
 
+
 class UrlArchiveResponse(BaseModel):
     success: bool
     message: str
 
 
-
 def get_file_extension(filename):
     return filename.rsplit('.', 1)[1].lower()
+
 
 def process_file_upload(upload_file_record: UserUpload):
     pass
 
 
-@user_uploads_router.post("/bots/{bot_id}/user_upload")
-def upload_file(bot_id: int, file: UploadFile, chat_id: int = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+@user_uploads_router.post("/user_upload")
+def upload_file(file: UploadFile, chat_id: int = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     upload_file_record = user_upload_crud.create_user_upload(
         db, current_user, file)
 
@@ -54,12 +55,12 @@ def upload_file(bot_id: int, file: UploadFile, chat_id: int = None, db: Session 
 
     return JSONResponse({"task_id": task_id})
 
-@user_uploads_router.post("/bots/{bot_id}/archive_url", response_model=UrlArchiveResponse)
+
+@user_uploads_router.post("/archive_url", response_model=UrlArchiveResponse)
 def upload_file(bot_id: int, urlObject: ArchiveUrl,  db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     # get the url
     url = urlObject.url
     return user_upload_crud.handle_url_archive(url, db, current_user)
-
 
 
 @user_uploads_router.get("/user_uploads", response_model=list[UserUpload])
