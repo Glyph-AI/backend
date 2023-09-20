@@ -53,7 +53,7 @@ def upload_file(bot_id: int, file: UploadFile, chat_id: int = None, db: Session 
         task_id = 1
     else:
         payload = {"user_upload_id": upload_file_record.id, "chat_id": chat_id}
-        send_task(url="/task/", payload=payload)
+        send_task(url="/tasks/process_file", payload=payload)
 
     return JSONResponse({"response": "Task Created"})
 
