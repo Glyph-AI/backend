@@ -12,6 +12,7 @@ class Bot(Base):
     name = Column(String, nullable=False)
     sharing_enabled = Column(Boolean, default=False)
     sharing_code = Column(String, unique=True)
+    available_in_store = Column(Boolean)
     persona_id = Column(Integer, ForeignKey("personas.id"))
     avatar_location = Column(String)
     description = Column(Text)
@@ -46,3 +47,7 @@ class Bot(Base):
             return None
 
         return creating_user[0].user_id
+
+    @property
+    def share_count(self):
+        return len([i for i in self.users if i.id != self.creator_id])

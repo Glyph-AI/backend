@@ -19,6 +19,14 @@ def get_bots(db: Session, current_user: schemas.User):
     return filter_bots(db, current_user).all()
 
 
+def get_store_bots(db: Session, current_user: schemas.User):
+    available_in_store = db.query(Bot).filter(Bot.available_in_store == True)
+    available_exclude_user = available_in_store.join(
+        BotUser).filter(BotUser.user_id == current_user.id)
+
+    return available_exclude_user.all()
+
+
 def create_bot(db: Session, current_user: schemas.User, bot_data: schemas.BotBase):
     if not current_user.can_create_bots:
         raise Errors.out_of_bots
@@ -65,9 +73,12 @@ def update_bot_by_id(bot_id: int, bot_data: schemas.BotUpdate, db: Session, curr
     bot = filter_bots(db, current_user).filter(Bot.id == bot_id).one_or_none()
     if bot is None:
         raise Errors.credentials_error
-
+    print("-" * 80)
+    print(bot_data)
     for key, value in bot_data.dict(exclude_none=True).items():
         setattr(bot, key, value)
+
+        print(key, value)
 
         if key == "sharing_enabled" and bot.sharing_code is None:
             # generate a sharing_code if we don't have one

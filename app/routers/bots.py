@@ -25,6 +25,11 @@ async def create_bot(bot_data: BotCreate, db: Session = Depends(get_db), current
     return new_bot_data
 
 
+@bots_router.get("/store", response_model=list[Bot])
+async def get_store_list(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return bot_crud.get_store_bots(db, current_user)
+
+
 @bots_router.post("/add-shared", response_model=Bot)
 async def add_shared_bot(sharing_data: BotSharingAdd, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return bot_crud.add_shared_bot(sharing_data, db, current_user)
@@ -58,24 +63,27 @@ async def change_tool_status(bot_id: int, tool_id: int, db: Session = Depends(ge
 async def change_text_status(bot_id: int, text_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return bot_crud.change_text_status(bot_id, text_id, db, current_user)
 
+
 @bots_router.get("/{bot_id}/token", response_model=BotToken)
 async def get_token(bot_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     bot = db.query(models.Bot).get(bot_id)
     if bot.creator_id != current_user.id:
         raise Errors.credentials_error
-    
+
     data_to_encode = {"sub": f"{current_user.email}|{bot.id}|"}
 
     token = create_bot_access_token(data_to_encode)
     return {"token": token}
 
 # not used currently
+
+
 @bots_router.get("/{bot_id}/{chat_id}/token", response_model=BotToken)
 async def get_token_with_chat(bot_id: int, chat_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     bot = db.query(models.Bot).get(bot_id)
     if bot.creator_id != current_user.id:
         raise Errors.credentials_error
-    
+
     chat = db.query(models.Chat).get(chat_id)
     if chat.user_id != current_user.id:
         raise Errors.credentials_error
@@ -84,5 +92,3 @@ async def get_token_with_chat(bot_id: int, chat_id: int, db: Session = Depends(g
 
     token = create_bot_access_token(data_to_encode)
     return {"token": token}
-
-
