@@ -10,6 +10,10 @@ def user_texts(db, current_user):
     return db.query(Text).filter(Text.user_id == current_user.id, or_(Text.deleted == None, Text.deleted == False), or_(Text.text_type == "file", Text.text_type == "note"))
 
 
+def user_texts_with_deleted(db, current_user):
+    return db.query(Text).filter(Text.user_id == current_user.id, or_(Text.text_type == "file", Text.text_type == "note"))
+
+
 def get_texts(db: Session, current_user: schemas.User):
     return user_texts(db, current_user).all()
 
@@ -48,9 +52,14 @@ def get_text_by_id(text_id: int, db: Session, current_user: schemas.User):
 
 def embed_text_by_id(text_id: int, db: Session, current_user: schemas.User):
     text = user_texts(db, current_user).filter(Text.id == text_id).first()
+    deleted_text = user_texts_with_deleted(
+        db, current_user).filter(Text.id == text_id).first()
+
+    if deleted_text is None:
+        raise Errors.credentials_error
 
     if text is None:
-        raise Errors.credentials_error
+        return True
 
     text.refresh_embeddings()
 
