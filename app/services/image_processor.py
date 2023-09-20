@@ -9,7 +9,7 @@ import pytesseract
 class ImageProcessor:
     def process(self, filepath):
         with open("/temp/output.txt", "w+") as f:
-            text = pytesseract.image_t_string(Image.open(filepath))
+            text = pytesseract.image_to_string(Image.open(filepath))
             f.write(text)
 
         return "/temp/output.txt"
