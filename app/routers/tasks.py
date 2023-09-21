@@ -25,8 +25,9 @@ class FileProcessSchema(BaseModel):
 def get_file_extension(filename):
     return filename.rsplit('.', 1)[1].lower()
 
-def process_file(user_upload_id: int, chat_id: int)
-     # instantiate services
+
+def process_file(user_upload_id: int, chat_id: int):
+    # instantiate services
     print(f"--LOG: Starting Job on user_upload: {user_upload_id}")
     db = next(get_db())
 
@@ -103,6 +104,7 @@ def process_file(user_upload_id: int, chat_id: int)
     db.commit()
 
     return True
+
 
 @tasks_router.post("/process_file")
 def tasks_process_file(request: Request, background_tasks: BackgroundTasks):
