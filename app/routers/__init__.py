@@ -8,3 +8,4 @@ from .tools import tools_router
 from .texts import texts_router
 from .public import public_router
 from .notifications import notifications_router
+from .tasks import tasks_router
