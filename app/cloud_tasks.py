@@ -1,29 +1,19 @@
 import json
 import os
 
-from google.cloud import tasks_v2beta3
+from google.cloud import tasks_v2
 
-client = tasks_v2beta3.CloudTasksClient()
+client = tasks_v2.CloudTasksClient()
 
 PROJECT_NAME = os.environ.get("GOOGLE_PROJECT_NAME", "Glyph Development")
 QUEUE_REGION = os.environ.get("QUEUE_REGION", "us-central1")
 QUEUE_ID = os.environ.get("QUEUE_ID", "file-processing")
+TARGET_BASE_URL = os.environ.get(
+    "WORKER_URL", "https://glyph-worker-52f2ltqu7q-uc.a.run.app")
 
 
 def send_task(url, http_method='POST', payload=None):
     """ Send task to be executed """
-
-    # construct the queue
-    parent = client.queue_path(PROJECT_NAME,
-                               QUEUE_REGION, queue=QUEUE_ID)
-
-    # construct the request body
-    task = {
-        'app_engine_http_request': {
-            'http_method': http_method,
-            'relative_uri': url
-        }
-    }
 
     if isinstance(payload, dict):
         # convert dict to JSON string
@@ -33,8 +23,17 @@ def send_task(url, http_method='POST', payload=None):
         # The API expects a payload of type bytes
         converted_payload = payload.encode()
 
-        # Add the payload to the request body
-        task['app_engine_http_request']['body'] = converted_payload
+    task = tasks_v2.Task(
+        http_request=tasks_v2.HTTPRequest(
+            http_method=tasks_v2.HttpMethod.POST,
+            url=f"{TARGET_BASE_URL}{url}",
+            body=converted_payload
+        )
+    )
+
+    # construct the queue
+    parent = client.queue_path(PROJECT_NAME,
+                               QUEUE_REGION, queue=QUEUE_ID)
 
     # use the client to build and send the task
     response = client.create_task(parent=parent, task=task)
