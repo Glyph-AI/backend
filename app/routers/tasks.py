@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, BackgroundTasks
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 import openai
@@ -25,13 +25,8 @@ class FileProcessSchema(BaseModel):
 def get_file_extension(filename):
     return filename.rsplit('.', 1)[1].lower()
 
-
-@tasks_router.post("/process_file")
-def process_file(request: Request):
-    task = json.loads(request.body().decode("utf-8"))
-    user_upload_id = task.user_upload_id
-    chat_id = task.chat_id
-    # instantiate services
+def process_file(user_upload_id: int, chat_id: int)
+     # instantiate services
     print(f"--LOG: Starting Job on user_upload: {user_upload_id}")
     db = next(get_db())
 
@@ -108,3 +103,12 @@ def process_file(request: Request):
     db.commit()
 
     return True
+
+@tasks_router.post("/process_file")
+def tasks_process_file(request: Request, background_tasks: BackgroundTasks):
+    task = json.loads(request.body().decode("utf-8"))
+    user_upload_id = task.user_upload_id
+    chat_id = task.chat_id
+    background_tasks.add_task(process_file, user_upload_id, chat_id)
+
+    return {"message": "Task processing"}
