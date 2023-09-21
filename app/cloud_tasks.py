@@ -24,7 +24,7 @@ def send_task(url, http_method='POST', payload=None):
         converted_payload = payload.encode()
 
     task = tasks_v2.Task(
-        http_request=tasks_v2.HTTPRequest(
+        http_request=tasks_v2.HttpRequest(
             http_method=tasks_v2.HttpMethod.POST,
             url=f"{TARGET_BASE_URL}{url}",
             body=converted_payload
