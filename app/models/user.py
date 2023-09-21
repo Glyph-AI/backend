@@ -1,3 +1,4 @@
+from app.db.base_class import Base
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -8,8 +9,10 @@ from sqlalchemy.orm.session import object_session
 from dateutil.relativedelta import relativedelta
 from operator import attrgetter
 import bcrypt
+import os
 
-from app.db.base_class import Base
+env = os.environ.get("ENVIRONMENT")
+
 
 FREEMIUM_BOTS = 3
 FREEMIUM_MESSAGES = 50
@@ -95,6 +98,9 @@ class User(Base):
 
     @property
     def bots_left(self):
+        if env == "development":
+            return 1000
+
         if self.subscription_in_good_standing:
             active_subscription = self.active_subscriptions()[0]
             bots_limit = active_subscription.price_tier.product.bot_limit
@@ -150,6 +156,8 @@ class User(Base):
 
     @property
     def messages_left(self):
+        if env == "development":
+            return 1000
         message_count = self.message_count
         if self.subscription_in_good_standing:
             active_subscription = self.active_subscriptions()[0]
@@ -163,6 +171,8 @@ class User(Base):
 
     @property
     def files_left(self):
+        if env == "development":
+            return 1000
         if not self.subscription_in_good_standing:
             return FREEMIUM_FILES - len(self.texts)
 

@@ -3,7 +3,7 @@ from datetime import datetime
 
 
 class PriceTier(BaseModel):
-    id: int
+    id: str
     product_id: str
     name: str
     price: float
