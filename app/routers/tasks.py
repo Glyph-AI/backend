@@ -112,6 +112,8 @@ async def tasks_process_file(request: Request, background_tasks: BackgroundTasks
     task = json.loads(body.decode("utf-8"))
     user_upload_id = int(task["user_upload_id"])
     chat_id = task["chat_id"]
-    background_tasks.add_task(process_file, user_upload_id, chat_id)
+    # Comment out backgrounding for now. We risk losing the Cloud Run service if we're not processing a request
+    # background_tasks.add_task(process_file, user_upload_id, chat_id)
+    process_file(user_upload_id, chat_id)
 
     return {"message": "Task processing"}
