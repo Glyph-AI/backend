@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 import openai
 import chardet
+import json
 import os
 from app.services import S3Service, PdfProcessor, DocxProcessor, ImageProcessor, AudioProcessor
 from app.models import UserUpload, Embedding, Text, ChatMessage, Embedding
@@ -26,7 +27,8 @@ def get_file_extension(filename):
 
 
 @tasks_router.post("/process_file")
-def process_file(task: FileProcessSchema):
+def process_file(request: Request):
+    task = json.loads(request.body().decode("utf-8"))
     user_upload_id = task.user_upload_id
     chat_id = task.chat_id
     # instantiate services
