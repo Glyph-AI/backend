@@ -107,8 +107,9 @@ def process_file(user_upload_id: int, chat_id: int):
 
 
 @tasks_router.post("/process_file")
-def tasks_process_file(request: Request, background_tasks: BackgroundTasks):
-    task = json.loads(request.body().decode("utf-8"))
+async def tasks_process_file(request: Request, background_tasks: BackgroundTasks):
+    body = await request.body()
+    task = json.loads(body.decode("utf-8"))
     user_upload_id = task.user_upload_id
     chat_id = task.chat_id
     background_tasks.add_task(process_file, user_upload_id, chat_id)
