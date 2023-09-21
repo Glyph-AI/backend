@@ -48,12 +48,12 @@ def upload_file(bot_id: int, file: UploadFile, chat_id: int = None, db: Session 
 
         chat_message_crud.create_chat_message(db, current_user, upload_message)
     environment = os.getenv("ENVIRONMENT", "development")
-    if environment == "development":
-        process_file(upload_file_record.id, chat_id)
-        task_id = 1
-    else:
-        payload = {"user_upload_id": upload_file_record.id, "chat_id": chat_id}
-        send_task(url="/tasks/process_file", payload=payload)
+    # if environment == "development":
+    #     process_file(upload_file_record.id, chat_id)
+    #     task_id = 1
+    # else:
+    payload = {"user_upload_id": upload_file_record.id, "chat_id": chat_id}
+    send_task(url="/tasks/process_file", payload=payload)
 
     return JSONResponse({"response": "Task Created"})
 

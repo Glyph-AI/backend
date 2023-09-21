@@ -5,7 +5,8 @@ from google.cloud import tasks_v2
 
 client = tasks_v2.CloudTasksClient()
 
-PROJECT_NAME = os.environ.get("GOOGLE_PROJECT_NAME", "Glyph Development")
+PROJECT_NAME = os.environ.get(
+    "GOOGLE_PROJECT_NAME", "glyph-development-382218")
 QUEUE_REGION = os.environ.get("QUEUE_REGION", "us-central1")
 QUEUE_ID = os.environ.get("QUEUE_ID", "file-processing")
 TARGET_BASE_URL = os.environ.get(
