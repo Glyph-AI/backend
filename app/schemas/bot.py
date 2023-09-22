@@ -9,6 +9,7 @@ from typing import List
 
 class BotBase(BaseModel):
     name: str
+    description: str | None = None
     sharing_enabled: bool | None = False
     sharing_code: str | None = None
     avatar_location: str | None = None
@@ -47,6 +48,7 @@ class Bot(BotBase):
 
 class BotUpdate(BaseModel):
     name: str | None = None
+    description: str | None = None
     sharing_enabled: bool | None = None
     available_in_store: bool | None = None
 
