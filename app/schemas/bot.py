@@ -35,8 +35,8 @@ class BotCreate(BaseModel):
 class Bot(BotBase):
     id: int
     created_at: datetime
-    users: list[User]
-    chats: "List[ChatListItem]"
+    # users: list[User]
+    # chats: "List[ChatListItem]"
     enabled_tools: list[Tool]
     enabled_texts: list[TextInfo]
     persona: Persona
