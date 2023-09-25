@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Boolean, Text
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Boolean, Text, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.sql import func
