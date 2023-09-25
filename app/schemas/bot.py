@@ -9,9 +9,12 @@ from typing import List
 
 class BotBase(BaseModel):
     name: str
+    description: str | None = None
     sharing_enabled: bool | None = False
     sharing_code: str | None = None
     avatar_location: str | None = None
+    share_count: int | None = None
+    available_in_store: bool | None = None
 
     class Config:
         orm_mode = True
@@ -45,7 +48,9 @@ class Bot(BotBase):
 
 class BotUpdate(BaseModel):
     name: str | None = None
+    description: str | None = None
     sharing_enabled: bool | None = None
+    available_in_store: bool | None = None
 
     class Config:
         orm_mode = True
@@ -54,14 +59,15 @@ class BotUpdate(BaseModel):
 class BotSharingAdd(BaseModel):
     sharing_code: str
 
+
 class BotApiInfo(BaseModel):
     user: "User"
     chat_id: int | None = None
     bot: Bot
 
+
 class BotToken(BaseModel):
     token: str
-
 
 
 from .chat import ChatListItem  # noqa

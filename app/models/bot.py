@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Boolean
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Boolean, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.sql import func
@@ -12,8 +12,10 @@ class Bot(Base):
     name = Column(String, nullable=False)
     sharing_enabled = Column(Boolean, default=False)
     sharing_code = Column(String, unique=True)
+    available_in_store = Column(Boolean)
     persona_id = Column(Integer, ForeignKey("personas.id"))
     avatar_location = Column(String)
+    description = Column(Text)
     created_at = Column(DateTime(timezone=True),
                         server_default=func.now())
 
@@ -45,3 +47,7 @@ class Bot(Base):
             return None
 
         return creating_user[0].user_id
+
+    @property
+    def share_count(self):
+        return len([i for i in self.users if i.id != self.creator_id])
