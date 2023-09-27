@@ -22,7 +22,7 @@ def get_bots(db: Session, current_user: schemas.User):
 def get_store_bots(db: Session, current_user: schemas.User):
     available_in_store = db.query(Bot).filter(Bot.available_in_store == True)
     available_exclude_user = available_in_store.join(
-        BotUser).filter(BotUser.user_id == current_user.id)
+        BotUser).filter(BotUser.user_id != current_user.id)
 
     return available_exclude_user.all()
 
