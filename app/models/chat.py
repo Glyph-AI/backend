@@ -57,7 +57,7 @@ class Chat(Base):
 
     @property
     def chat_token(self):
-        to_encode = {"sub": f"{self.user.email}|{self.id}"}
+        to_encode = {"sub": f"{self.user.email}|{self.bot_id}|{self.id}"}
         expires_delta = timedelta(minutes=100000)
 
         expire = datetime.utcnow() + expires_delta
