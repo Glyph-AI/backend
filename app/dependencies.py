@@ -101,15 +101,16 @@ async def get_current_user(db: Session = Depends(get_db), token: Token = Depends
 
 # handles permissioning for bot keys
 # requires token in the format {email}|{bot_id}|{chat_id}
+
+
 async def get_current_bot(db: Session = Depends(get_db), token: Token = Depends(bot_bearer_scheme)):
     try:
-        payload = jwt.decode(token.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token.credentials, SECRET_KEY,
+                             algorithms=[ALGORITHM])
         data = payload.get("sub").split("|")
         email = data[0]
         id = int(data[1])
-        chat_id = None
-        if len(data[2]) > 0:
-            chat_id = int(data[1])
+        chat_id = int(data[2])
         if id is None:
             raise Errors.credentials_error
         token_data = BotTokenData(id=id, chat_id=chat_id, email=email)
@@ -119,10 +120,11 @@ async def get_current_bot(db: Session = Depends(get_db), token: Token = Depends(
     bot = bot_crud.get_bot_by_id(token_data.id, db, user)
 
     # make sure the user calling the API is a user of this bot
-    bot_user = db.query(models.BotUser).filter(models.BotUser.user_id == user.id, models.BotUser.bot_id == bot.id).first()
+    bot_user = db.query(models.BotUser).filter(
+        models.BotUser.user_id == user.id, models.BotUser.bot_id == bot.id).first()
     if not bot_user:
         raise Errors.credentials_error
-    
+
     info = BotApiInfo(user=user, bot=bot, chat_id=chat_id)
 
     return info
@@ -142,6 +144,7 @@ def create_access_token(data: dict):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
 
 def create_bot_access_token(data: dict):
     to_encode = data.copy()
