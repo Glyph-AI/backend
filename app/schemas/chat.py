@@ -11,11 +11,12 @@ class ChatBase(BaseModel):
     bot_id: int
     bot: "BotBase"
 
+
 class ChatCreate(BaseModel):
     name: str
     bot_id: int
 
-    class Config: 
+    class Config:
         orm_mode = True
 
 
@@ -28,11 +29,19 @@ class Chat(ChatBase):
     class Config:
         orm_mode = True
 
+
 class ChatListItem(ChatBase):
     id: int
     user_id: int
     created_at: datetime | None = None
     last_message: ChatMessage | None = None
+
+    class Config:
+        orm_mode = True
+
+
+class ChatApiAccess(ChatBase):
+    chat_token: str
 
     class Config:
         orm_mode = True
